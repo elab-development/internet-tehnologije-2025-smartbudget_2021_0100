@@ -11,3 +11,71 @@ generator client {
 datasource db {
   provider = "mysql"
 }
+
+// MIGRACIJA 1: Osnovni entiteti
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("USER")
+  createdAt DateTime @default(now())
+  
+  wallets   Wallet[]
+  categories   Category[]
+  transactions Transaction[]
+  budgets      Budget[]
+}
+
+model Wallet {
+  id       Int     @id @default(autoincrement())
+  name     String
+  balance  Decimal @default(0)
+  currency String  @default( "RSD" )
+  
+  userId   Int
+  user     User    @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+}
+
+// MIGRACIJA 2: Dodavanje finansijskih modula
+model Category {
+  id       Int     @id @default(autoincrement())
+  name     String
+  type     String
+  isSystem Boolean @default(false)
+  
+  userId   Int?
+  user     User?   @relation(fields: [userId], references: [id])
+  
+  transactions Transaction[]
+  budgets      Budget[]
+}
+
+model Transaction {
+  id          Int      @id @default(autoincrement())
+  amount      Decimal
+  date        DateTime @default(now())
+  description String?
+  
+  walletId    Int
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id])
+  
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Budget {
+  id     Int     @id @default(autoincrement())
+  amount Decimal
+  period String
+  
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
