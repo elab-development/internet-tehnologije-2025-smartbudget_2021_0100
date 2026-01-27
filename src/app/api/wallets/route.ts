@@ -1,16 +1,20 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import  prisma  from "@/lib/prisma";
 
-
-const prisma = new PrismaClient();
-
-// 1. GET metoda - Vraća sve novčanike za korisnika
-export async function GET() {
+// 1. GET: Vraća novčanike, ali traži ID korisnika u URL-u
+export async function GET(request: Request) {
   try {
-    
+    // Uzimamo userId iz URL-a (npr. /api/wallets?userId=5)
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
+
+    if (!userId) {
+      return NextResponse.json({ error: "Niste ulogovani" }, { status: 401 });
+    }
+
     const wallets = await prisma.wallet.findMany({
       where: {
-        userId: 1, 
+        userId: parseInt(userId), // Pretvaramo string "5" u broj 5
       },
     });
 
@@ -23,16 +27,15 @@ export async function GET() {
   }
 }
 
-// 2. POST metoda - Kreira novi novčanik
+// 2. POST: Kreira novčanik za određenog korisnika
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, balance, currency } = body;
+    const { name, balance, currency, userId } = body; // Čekamo i userId
 
-    // Validacija
-    if (!name) {
+    if (!name || !userId) {
       return NextResponse.json(
-        { error: "Ime novčanika je obavezno" },
+        { error: "Podaci nisu kompletni" },
         { status: 400 }
       );
     }
@@ -42,7 +45,7 @@ export async function POST(request: Request) {
         name,
         balance: balance || 0,
         currency: currency || "RSD",
-        userId: 1, // Privremeno zakucano
+        userId: parseInt(userId), // Vezujemo za pravog korisnika!
       },
     });
 
