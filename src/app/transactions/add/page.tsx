@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Button from "@/components/ui/Button"; // Proveri putanje, mozda je ../../../components
+import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
 export default function AddTransactionPage() {
   const router = useRouter();
   
-  // Podaci iz baze
   const [wallets, setWallets] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,13 +15,12 @@ export default function AddTransactionPage() {
   // Podaci forme
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState("EXPENSE"); // Default je trošak
+  const [type, setType] = useState("EXPENSE"); 
   const [selectedWallet, setSelectedWallet] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]); // Danas
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
   useEffect(() => {
-    // 1. Provera da li je korisnik ulogovan
     const storedUser = localStorage.getItem("user");
     if (!storedUser) {
       router.push("/login");
@@ -30,7 +28,6 @@ export default function AddTransactionPage() {
     }
     const user = JSON.parse(storedUser);
 
-    // 2. Učitaj novčanike i kategorije paralelno
     const fetchData = async () => {
       try {
         const [resWallets, resCategories] = await Promise.all([
@@ -47,10 +44,9 @@ export default function AddTransactionPage() {
         if (resCategories.ok) {
           const cData = await resCategories.json();
           setCategories(cData);
-          // Ne setujemo odmah kategoriju jer zavisi od tipa (INCOME/EXPENSE)
         }
       } catch (error) {
-        console.error("Greška pri učitavanju:", error);
+        console.error("Greška:", error);
       } finally {
         setLoading(false);
       }
@@ -59,23 +55,16 @@ export default function AddTransactionPage() {
     fetchData();
   }, []);
 
-  // Kad se promeni tip (Prihod/Rashod), resetuj izabranu kategoriju na prvu dostupnu
   useEffect(() => {
     const filtered = categories.filter(c => c.type === type);
     if (filtered.length > 0) {
       setSelectedCategory(filtered[0].id);
-    } else {
-      setSelectedCategory("");
     }
   }, [type, categories]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!selectedWallet || !selectedCategory) {
-      alert("Moraš izabrati novčanik i kategoriju!");
-      return;
-    }
+    if (!selectedWallet || !selectedCategory) return;
 
     try {
       const res = await fetch("/api/transactions", {
@@ -92,125 +81,118 @@ export default function AddTransactionPage() {
       });
 
       if (res.ok) {
-        router.push("/wallets"); // Vrati na listu novčanika
-      } else {
-        const err = await res.json();
-        alert("Greška: " + err.error);
+        router.push("/wallets");
       }
     } catch (error) {
       console.error("Greška:", error);
     }
   };
 
-  if (loading) return <p className="p-8">Učitavanje...</p>;
+  if (loading) return <div className="p-10 text-center text-gray-400 font-medium">Učitavanje...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 flex justify-center">
-      <div className="w-full max-w-lg bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">Nova Transakcija</h1>
+    <div className="min-h-screen bg-gray-900 p-4 md:p-8 flex justify-center">
+      <div className="w-full max-w-lg bg-gray-800 p-6 md:p-8 rounded-2xl shadow-2xl border border-gray-700 h-fit">
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 bg-blue-600/20 text-blue-400 rounded-xl flex items-center justify-center border border-blue-600/30">
+                💸
+            </div>
+            <h1 className="text-2xl font-bold text-white">Nova Transakcija</h1>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="space-y-6">
           
-          {/* Dugmići za Tip */}
-          <div className="flex gap-4 mb-6">
+          {/* Tasteri za tip transakcije */}
+          <div className="flex gap-3 bg-gray-900/50 p-1.5 rounded-2xl border border-gray-700">
             <button
               type="button"
               onClick={() => setType("EXPENSE")}
-              className={`flex-1 py-3 rounded-lg font-bold transition ${
+              className={`flex-1 py-3 rounded-xl font-bold transition-all duration-200 ${
                 type === "EXPENSE" 
-                  ? "bg-red-500 text-white shadow-md" 
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  ? "bg-red-600 text-white shadow-lg" 
+                  : "text-gray-400 hover:text-gray-200"
               }`}
             >
-              Trošak (-)
+              Trošak
             </button>
             <button
               type="button"
               onClick={() => setType("INCOME")}
-              className={`flex-1 py-3 rounded-lg font-bold transition ${
+              className={`flex-1 py-3 rounded-xl font-bold transition-all duration-200 ${
                 type === "INCOME" 
-                  ? "bg-green-500 text-white shadow-md" 
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  ? "bg-green-600 text-white shadow-lg" 
+                  : "text-gray-400 hover:text-gray-200"
               }`}
             >
-              Prihod (+)
+              Prihod
             </button>
           </div>
 
-          {/* Iznos */}
-          <Input 
-            label="Iznos (RSD)" 
-            type="number" 
-            value={amount} 
-            onChange={(e) => setAmount(e.target.value)} 
-            required 
-            placeholder="0"
-          />
+          <div className="grid grid-cols-1 gap-5">
+            <Input 
+              label="Iznos" 
+              type="number" 
+              value={amount} 
+              onChange={(e) => setAmount(e.target.value)} 
+              required 
+              placeholder="0.00"
+            />
 
-          {/* Opis */}
-          <Input 
-            label="Opis (opciono)" 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)} 
-            placeholder="npr. Ručak, Plata..."
-          />
-          
-          {/* Izbor Novčanika */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Novčanik</label>
-            <select 
-                className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                value={selectedWallet}
-                onChange={(e) => setSelectedWallet(e.target.value)}
-            >
-                {wallets.map(w => (
-                  <option key={w.id} value={w.id}>
-                    {w.name} (Trenutno: {w.balance} {w.currency})
-                  </option>
-                ))}
-            </select>
+            <Input 
+              label="Opis" 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+              placeholder="Na šta ste potrošili?"
+            />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2 ml-1">Novčanik</label>
+                    <select 
+                        className="w-full px-4 py-3 rounded-xl border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+                        value={selectedWallet}
+                        onChange={(e) => setSelectedWallet(e.target.value)}
+                    >
+                        {wallets.map(w => (
+                          <option key={w.id} value={w.id}>{w.name}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-400 mb-2 ml-1">Kategorija</label>
+                    <select 
+                        className="w-full px-4 py-3 rounded-xl border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                    >
+                        {categories.filter(c => c.type === type).map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                 <label className="block text-sm font-medium text-gray-400 mb-2 ml-1">Datum</label>
+                 <input 
+                   type="date" 
+                   className="w-full px-4 py-3 rounded-xl border border-gray-700 bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                   value={date}
+                   onChange={(e) => setDate(e.target.value)}
+                 />
+            </div>
           </div>
 
-          {/* Izbor Kategorije */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Kategorija</label>
-            <select 
-                className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-            >
-                {/* Filtriramo kategorije da prikazujemo samo one koje odgovaraju tipu */}
-                {categories
-                  .filter(c => c.type === type)
-                  .map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-                
-                {categories.filter(c => c.type === type).length === 0 && (
-                  <option disabled>Nema kategorija za ovaj tip</option>
-                )}
-            </select>
-          </div>
-
-          {/* Datum */}
-          <div>
-             <label className="block text-sm font-medium text-gray-700 mb-1">Datum</label>
-             <input 
-               type="date" 
-               className="w-full p-2 border rounded-lg"
-               value={date}
-               onChange={(e) => setDate(e.target.value)}
-             />
-          </div>
-
-          <div className="pt-4">
-            <Button type="submit">Sačuvaj</Button>
+          <div className="pt-4 border-t border-gray-700">
+            <Button type="submit">Sačuvaj transakciju</Button>
             <button 
               type="button"
-              onClick={() => router.back()}
-              className="w-full mt-2 text-gray-500 text-sm hover:underline"
+              onClick={() => router.push("/wallets")}
+              className="w-full mt-4 text-gray-500 hover:text-gray-300 text-sm font-medium transition-colors"
             >
-              Otkaži
+              Odustani
             </button>
           </div>
         </form>

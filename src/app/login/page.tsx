@@ -1,20 +1,23 @@
-"use client"; // <--- OVO JE OBAVEZNO NA PRVOJ LINIJI
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Button from "@/components/ui/Button"; 
+import Input from "@/components/ui/Input";   
 
-// OVO JE ONO STO JE FALILO - "export default function"
 export default function LoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess(false);
+    setLoading(true);
 
     try {
       const res = await fetch("/api/login", {
@@ -27,6 +30,7 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data.message);
+        setLoading(false);
         return;
       }
 
@@ -34,57 +38,69 @@ export default function LoginPage() {
       localStorage.setItem("user", JSON.stringify(data.user));
 
       setTimeout(() => {
-        router.push("/"); 
+        router.push("/wallets"); 
       }, 1000);
 
     } catch (err) {
       setError("Došlo je do greške.");
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Prijava</h2>
+    
+    <div className="flex min-h-screen items-center justify-center bg-gray-900 p-4">
+      
+      
+      <div className="w-full max-w-md bg-gray-800 p-8 rounded-2xl shadow-2xl border border-gray-700">
         
-        {error && <div className="bg-red-100 text-red-600 p-3 rounded mb-4 text-sm">{error}</div>}
-        {success && <div className="bg-green-100 text-green-600 p-3 rounded mb-4 text-sm">Uspešno! Ulazite...</div>}
+        <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-white">Dobrodošli</h2>
+            <p className="text-gray-400 mt-2">Unesite podatke za pristup</p>
+        </div>
+        
+        
+        {error && (
+            <div className="bg-red-900/30 border border-red-800 text-red-200 p-3 rounded-xl mb-6 text-sm flex items-center gap-2">
+                ⚠️ {error}
+            </div>
+        )}
+        {success && (
+            <div className="bg-green-900/30 border border-green-800 text-green-200 p-3 rounded-xl mb-6 text-sm flex items-center gap-2">
+                ✅ Uspešno! Ulazite...
+            </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <input
-              type="email"
-              required
-              className="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <Input
+             label="Email adresa"
+             type="email"
+             required
+             placeholder="tvoj@email.com"
+             value={formData.email}
+             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          />
+
+          <Input
+             label="Lozinka"
+             type="password"
+             required
+             placeholder="••••••••"
+             value={formData.password}
+             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          />
+
+          <div className="pt-2">
+            <Button type="submit" disabled={loading}>
+                {loading ? "Provera..." : "Uloguj se"}
+            </Button>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Lozinka</label>
-            <input
-              type="password"
-              required
-              className="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-          >
-            Uloguj se
-          </button>
         </form>
 
-        <p className="mt-4 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-gray-400">
           Nemaš nalog?{" "}
-          <Link href="/register" className="text-blue-600 hover:underline">
-            Registruj se
+          <Link href="/register" className="text-blue-400 hover:text-blue-300 font-semibold hover:underline">
+            Registruj se besplatno
           </Link>
         </p>
       </div>
