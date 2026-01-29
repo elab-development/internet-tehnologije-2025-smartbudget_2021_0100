@@ -15,9 +15,10 @@ export async function POST(request: Request) {
     }
 
     // 2. Transakcija baze
-    const result = await prisma.$transaction(async (tx) => {
+    // DODALI SMO ": any" PORED tx DA SKLONIMO CRVENO
+    const result = await prisma.$transaction(async (tx: any) => {
       
-      // KORAK A: Prvo nađemo novčanik da vidimo čiji je (treba nam userId)
+      // KORAK A: Prvo nađemo novčanik da vidimo čiji je
       const wallet = await tx.wallet.findUnique({
         where: { id: parseInt(walletId) }
       });
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
         throw new Error("Novčanik ne postoji!");
       }
 
-      // KORAK B: Kreiramo transakciju koristeći direktan userId (bez 'connect')
+      // KORAK B: Kreiramo transakciju
       const transaction = await tx.transaction.create({
         data: {
           amount: parseFloat(amount),
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
           description,
           walletId: parseInt(walletId),
           categoryId: parseInt(categoryId),
-          userId: wallet.userId // <--- OVO JE FIX! Samo prosledimo broj.
+          userId: wallet.userId 
         },
       });
 
@@ -62,5 +63,39 @@ export async function POST(request: Request) {
       { error: "Greška prilikom kreiranja transakcije" },
       { status: 500 }
     );
+  }
+}
+
+// --- GET METODA ---
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get('userId');
+
+    if (!userId) {
+      // Ako nema ID-a, vratimo prazan niz da ne puca Front
+      return NextResponse.json([], { status: 200 });
+    }
+
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        userId: parseInt(userId)
+      },
+      include: {
+        category: true,
+        wallet: true
+      },
+      orderBy: {
+        date: 'desc'
+      },
+      take: 50
+    });
+
+    return NextResponse.json(transactions, { status: 200 });
+
+  } catch (error) {
+    console.error("Greška pri učitavanju:", error);
+    // BITNA IZMENA: Vraćamo prazan niz [] umesto greške, da ne pukne .map()
+    return NextResponse.json([], { status: 500 });
   }
 }

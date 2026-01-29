@@ -14,38 +14,38 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess(false);
-    setLoading(true);
+    e.preventDefault();
+    setError("");
+    setSuccess(false);
+    setLoading(true);
 
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-      const data = await res.json();
+      const data = await res.json();
 
-      if (!res.ok) {
-        setError(data.message);
-        setLoading(false);
-        return;
-      }
+      if (!res.ok) {
+        setError(data.message);
+        setLoading(false);
+        return;
+      }
 
-      setSuccess(true);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      setSuccess(true);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      setTimeout(() => {
-        router.push("/wallets"); 
-      }, 1000);
+      setTimeout(() => {
+        router.push("/"); // Prebacujemo ga na Dashboard (Pocetnu), a ne na Wallets
+      }, 1000);
 
-    } catch (err) {
-      setError("Došlo je do greške.");
-      setLoading(false);
-    }
-  };
+    } catch (err) {
+      setError("Došlo je do greške.");
+      setLoading(false);
+    }
+  };
 
   return (
     
