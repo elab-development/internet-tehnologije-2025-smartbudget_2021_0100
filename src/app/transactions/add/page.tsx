@@ -81,7 +81,7 @@ export default function AddTransactionPage() {
       });
 
       if (res.ok) {
-        router.push("/wallets");
+        router.push("/");
       }
     } catch (error) {
       console.error("Greška:", error);
@@ -189,7 +189,7 @@ export default function AddTransactionPage() {
             <Button type="submit">Sačuvaj transakciju</Button>
             <button 
               type="button"
-              onClick={() => router.push("/wallets")}
+              onClick={() => router.push("/")}
               className="w-full mt-4 text-gray-500 hover:text-gray-300 text-sm font-medium transition-colors"
             >
               Odustani

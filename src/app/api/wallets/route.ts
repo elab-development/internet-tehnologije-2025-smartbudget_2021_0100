@@ -57,3 +57,28 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
+// 3. DELETE: Briše novčanik na osnovu ID-ja iz URL-a
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "ID je obavezan" }, { status: 400 });
+    }
+
+    await prisma.wallet.delete({
+      where: {
+        id: parseInt(id),
+      },
+    });
+
+    return NextResponse.json({ message: "Obrisano uspešno" }, { status: 200 });
+  } catch (error) {
+    console.error("Greška pri brisanju:", error);
+    return NextResponse.json({ error: "Greška na serveru" }, { status: 500 });
+  }
+}
+

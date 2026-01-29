@@ -20,6 +20,7 @@ model User {
   password  String
   name      String
   role      String   @default("USER")
+  isBlocked Boolean  @default(false)
   createdAt DateTime @default(now())
   
   wallets   Wallet[]

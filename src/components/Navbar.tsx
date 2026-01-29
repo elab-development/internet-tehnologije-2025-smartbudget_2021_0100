@@ -1,92 +1,161 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 
 export default function Navbar() {
-  const [user, setUser] = useState<any>(null);
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<any>(null);
+  
+  // 1. NOVO STANJE: Da li je prozor za potvrdu otvoren?
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     const checkUser = () => {
-      const userJson = localStorage.getItem("user");
-      if (userJson) {
-        setUser(JSON.parse(userJson));
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {
+          console.error("Greška pri čitanju korisnika", e);
+        }
       } else {
         setUser(null);
       }
     };
+
     checkUser();
     window.addEventListener("storage", checkUser);
     return () => window.removeEventListener("storage", checkUser);
   }, [pathname]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    window.location.href = "/"; 
+  if (pathname === "/login" || pathname === "/register") {
+    return null;
+  }
+
+  // 2. FUNKCIJA KOJA SAMO OTVARA PROZOR
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
   };
 
-  if (pathname === "/login" || pathname === "/register") return null;
+  // 3. FUNKCIJA KOJA STVARNO ODJAVLJUJE (Poziva se tek na "Da")
+  const confirmLogout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+    setShowLogoutModal(false); // Zatvori modal
+    router.push("/login");
+  };
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-800 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16 items-center">
-          
-          {/* LEVO: Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="bg-blue-600 w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white">
-              $
-            </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-green-400">
-              SmartBudget
-            </span>
-          </Link>
-
-          {/* DESNO: Linkovi - OVDE JE PROMENA */}
-          <div className="flex items-center gap-4">
-            {user ? (
-              <>
-                <span className="text-gray-400 text-sm hidden sm:block">
-                  {user.name} {user.role === 'ADMIN' && <span className="text-red-400 font-bold">(Admin)</span>}
+    <>
+      <nav className="sticky top-0 z-40 bg-gray-800/90 backdrop-blur-md border-b border-gray-700 shadow-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            
+            {/* LEVA STRANA */}
+            <div className="flex items-center gap-8">
+              <Link href="/" className="flex items-center gap-2 group">
+                <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-green-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-blue-900/50 group-hover:scale-105 transition-transform">
+                  $
+                </div>
+                <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">
+                  SmartBudget
                 </span>
-                
-                {/* Prikazujemo "Moji Novčanici" SAMO ako NIJE Admin */}
-                {user.role !== 'ADMIN' && (
-                  <Link 
-                    href="/wallets" 
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                      pathname === "/wallets" 
-                        ? "bg-blue-900 text-blue-200" 
-                        : "text-gray-300 hover:text-white hover:bg-gray-800"
-                    }`}
-                  >
-                    Moji Novčanici
-                  </Link>
-                )}
+              </Link>
 
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-red-900/20 text-red-400 border border-red-900/50 hover:bg-red-900/40 transition"
+              <div className="hidden md:flex gap-1">
+                <Link 
+                  href="/wallets" 
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    pathname === '/wallets' 
+                      ? 'bg-gray-700 text-blue-400' 
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                  }`}
                 >
-                  Odjavi se
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="text-gray-300 hover:text-white text-sm font-medium">
-                  Prijavi se
+                  Moji Novčanici
                 </Link>
-                <Link href="/register" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
-                  Registracija
-                </Link>
-              </>
-            )}
-          </div>
 
+                <Link 
+                  href="/transfer" 
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    pathname === '/transfer' 
+                      ? 'bg-gray-700 text-blue-400' 
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                  }`}
+                >
+                  Prenos Novca
+                </Link>
+              </div>
+            </div>
+
+            {/* DESNA STRANA */}
+            <div className="flex items-center gap-4">
+              <Link 
+                  href="/transactions/add"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-500 transition shadow-lg shadow-blue-900/20 flex items-center gap-2"
+              >
+                  <span>＋</span> <span className="hidden sm:inline">Nova Transakcija</span>
+              </Link>
+
+              <div className="h-6 w-px bg-gray-600 mx-1"></div>
+
+              <div className="flex items-center gap-3">
+                 {user && (
+                   <span className="text-sm font-semibold text-gray-300 block">
+                      {user.name}
+                   </span>
+                 )}
+                 
+                 {/* DUGME SADA SAMO OTVARA MODAL */}
+                 <button 
+                   onClick={handleLogoutClick}
+                   className="text-sm font-semibold text-red-400 hover:text-red-300 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-all duration-200 border border-red-500/20"
+                 >
+                   Odjavi se
+                 </button>
+              </div>
+            </div>
+
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      {/* 4. MODALNI PROZOR (POP-UP) */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+           {/* Sadržaj prozora */}
+           <div className="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100">
+              
+              <div className="text-center">
+                <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                  🚪
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Odjavljivanje</h3>
+                <p className="text-gray-400 text-sm mb-6">
+                  Da li ste sigurni da želite da se odjavite sa sistema?
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowLogoutModal(false)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 transition"
+                >
+                  Odustani
+                </button>
+                <button 
+                  onClick={confirmLogout}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-500 shadow-lg shadow-red-900/20 transition"
+                >
+                  Da, odjavi me
+                </button>
+              </div>
+
+           </div>
+        </div>
+      )}
+    </>
   );
 }

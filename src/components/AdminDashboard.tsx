@@ -1,81 +1,110 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Button from "./ui/Button";
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Učitavamo sve korisnike (SK18)
-  useEffect(() => {
-    fetch("/api/admin/users")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setUsers(data);
-      })
-      .catch((err) => console.error(err));
-  }, []);
-
-  const handleBlock = async (userId: number) => {
-    // Ovde ćemo kasnije dodati logiku za blokiranje (SK19)
-    alert(`Blokiranje korisnika ID: ${userId} - Uskoro!`);
+  // 1. Učitaj sve korisnike
+  const fetchUsers = async () => {
+    try {
+      // Pretpostavljam da je tvoj drug napravio ovu rutu, ako nije, napravićemo je
+      const res = await fetch("/api/admin/users"); 
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data);
+      }
+    } catch (error) {
+      console.error("Greška:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-900 text-white p-6">
-      <div className="max-w-6xl mx-auto">
-        <header className="mb-8 border-b border-gray-700 pb-4">
-          <h1 className="text-3xl font-bold text-red-500">Admin Panel 🛡️</h1>
-          <p className="text-gray-400">Upravljanje korisnicima i sistemom</p>
-        </header>
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-        <div className="bg-gray-800 rounded-xl shadow-lg border border-gray-700 overflow-hidden">
-          <div className="p-6 border-b border-gray-700 flex justify-between items-center">
-            <h2 className="text-xl font-bold">Lista Korisnika</h2>
-            <span className="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded-full">
-              Ukupno: {users.length}
-            </span>
-          </div>
-          
-          <table className="w-full text-left text-sm text-gray-300">
-            <thead className="bg-gray-900/50 uppercase text-xs text-gray-500">
-              <tr>
-                <th className="px-6 py-3">ID</th>
-                <th className="px-6 py-3">Ime</th>
-                <th className="px-6 py-3">Email</th>
-                <th className="px-6 py-3">Uloga</th>
-                <th className="px-6 py-3 text-right">Akcija</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-700">
-              {users.map((u) => (
-                <tr key={u.id} className="hover:bg-gray-700/50 transition">
-                  <td className="px-6 py-4">#{u.id}</td>
-                  <td className="px-6 py-4 font-medium text-white">{u.name}</td>
-                  <td className="px-6 py-4">{u.email}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-xs border ${
-                      u.role === "ADMIN" 
-                        ? "bg-red-900/30 text-red-400 border-red-900" 
-                        : "bg-green-900/30 text-green-400 border-green-900"
-                    }`}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    {u.role !== "ADMIN" && (
-                      <button 
-                        onClick={() => handleBlock(u.id)}
-                        className="text-red-400 hover:text-red-300 hover:underline"
-                      >
-                        Blokiraj
-                      </button>
+  // 2. Funkcija za blokiranje
+  const toggleBlockStatus = async (userId: number, currentStatus: boolean) => {
+    try {
+      const res = await fetch("/api/admin/users/block", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            userId, 
+            isBlocked: !currentStatus // Šaljemo suprotno od trenutnog (ako je false biće true)
+        }),
+      });
+
+      if (res.ok) {
+        // Osveži listu da se vidi promena
+        fetchUsers();
+      } else {
+        alert("Greška pri promeni statusa!");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  if (loading) return <div className="p-8 text-white">Učitavanje korisnika...</div>;
+
+  return (
+    <div className="max-w-7xl mx-auto p-8">
+      <h1 className="text-3xl font-bold text-white mb-6">Admin Panel - Upravljanje korisnicima</h1>
+      
+      <div className="bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-700">
+        <table className="w-full text-left text-gray-300">
+          <thead className="bg-gray-900 text-gray-400 uppercase text-xs">
+            <tr>
+              <th className="px-6 py-4">ID</th>
+              <th className="px-6 py-4">Ime</th>
+              <th className="px-6 py-4">Email</th>
+              <th className="px-6 py-4">Uloga</th>
+              <th className="px-6 py-4">Status</th>
+              <th className="px-6 py-4">Akcija</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-700">
+            {users.map((user) => (
+              <tr key={user.id} className="hover:bg-gray-700/50 transition">
+                <td className="px-6 py-4 font-mono text-sm">{user.id}</td>
+                <td className="px-6 py-4 font-semibold text-white">{user.name}</td>
+                <td className="px-6 py-4">{user.email}</td>
+                <td className="px-6 py-4">
+                  <span className={`px-2 py-1 rounded-md text-xs font-bold ${user.role === 'ADMIN' ? 'bg-purple-900 text-purple-200' : 'bg-blue-900 text-blue-200'}`}>
+                    {user.role}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                    {user.isBlocked ? (
+                        <span className="text-red-400 font-bold flex items-center gap-1">⛔ Blokiran</span>
+                    ) : (
+                        <span className="text-green-400 font-bold flex items-center gap-1">✅ Aktivan</span>
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                </td>
+                <td className="px-6 py-4">
+                  {/* Ne dozvoljavamo da admin blokira samog sebe */}
+                  {user.role !== 'ADMIN' && (
+                      <button
+                        onClick={() => toggleBlockStatus(user.id, user.isBlocked)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+                            user.isBlocked 
+                            ? "bg-green-600 hover:bg-green-500 text-white" // Dugme za odblokiranje
+                            : "bg-red-600 hover:bg-red-500 text-white"     // Dugme za blokiranje
+                        }`}
+                      >
+                        {user.isBlocked ? "Odblokiraj" : "Blokiraj"}
+                      </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
