@@ -1,20 +1,30 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-export async function GET() {
+export async function PUT(req: Request) {
   try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isBlocked: true, // Bitno: dovlačimo i status
+    const body = await req.json();
+    const { userId, isBlocked } = body;
+
+    // 1. Provera podataka
+    if (!userId) {
+      return NextResponse.json({ error: "Nedostaje userId" }, { status: 400 });
+    }
+
+    // 2. Ažuriranje u bazi
+    const updatedUser = await prisma.user.update({
+      where: { 
+        id: Number(userId) // Pretvaramo u broj za svaki slučaj
       },
-      orderBy: { id: 'asc' }
+      data: { 
+        isBlocked: isBlocked 
+      } 
     });
-    return NextResponse.json(users);
+
+    return NextResponse.json(updatedUser, { status: 200 });
+
   } catch (error) {
-    return NextResponse.json({ error: "Greška" }, { status: 500 });
+    console.error("Greška pri blokiranju:", error);
+    return NextResponse.json({ error: "Greška na serveru" }, { status: 500 });
   }
 }

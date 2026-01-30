@@ -76,7 +76,16 @@ export default function Navbar() {
                 >
                   Moji Novčanici
                 </Link>
-
+                  <Link 
+                  href="/budgets" 
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                    pathname === "/budgets" 
+                      ? "bg-blue-900 text-blue-200" 
+                      : "text-gray-300 hover:text-white hover:bg-gray-800"
+                  }`}
+                >
+                  Budžeti
+                </Link>
                 <Link 
                   href="/transfer" 
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${

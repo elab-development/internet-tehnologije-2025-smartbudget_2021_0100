@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-// Definišemo kako izgleda transakcija (TypeScript tipovi)
+// Definišemo kako izgleda transakcija
 interface Transaction {
   id: number;
   amount: number;
   description: string;
-  type: "INCOME" | "EXPENSE";
+  type: "INCOME" | "EXPENSE" | "TRANSFER";
   date: string;
-  category?: { name: string; icon?: string }; // Upitnik znači da možda nema kategoriju
+  category?: { name: string; icon?: string };
   wallet: { name: string };
 }
 
@@ -17,79 +17,199 @@ export default function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // --- NOVA STANJA ZA FILTERE ---
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState("ALL"); // ALL, INCOME, EXPENSE, TRANSFER
+  const [filterCategory, setFilterCategory] = useState("ALL");
+  // -----------------------------
+
   useEffect(() => {
     const userJson = localStorage.getItem("user");
     if (!userJson) return;
     
     const user = JSON.parse(userJson);
 
-    // Zovemo API
     fetch(`/api/transactions?userId=${user.id}`)
       .then((res) => res.json())
       .then((data) => {
-        // PROVERA: Da li je ovo stvarno niz?
         if (Array.isArray(data)) {
           setTransactions(data);
         } else {
-          // Ako nije niz (nego npr. greška), stavimo praznu listu da ne pukne sajt
-          console.error("API nije vratio niz:", data);
           setTransactions([]); 
         }
       })
       .catch((err) => {
         console.error("Greška:", err);
-        setTransactions([]); // U slučaju greške, prazna lista
+        setTransactions([]);
       })
       .finally(() => {
         setLoading(false);
       });
   }, []);
 
+  // --- LOGIKA FILTRIRANJA ---
+  // Ovo se izvršava svaki put kad korisnik promeni filtere
+  const filteredTransactions = transactions.filter((tx) => {
+    // 1. Pretraga po opisu (case insensitive - nije bitno malo/veliko slovo)
+    const matchesSearch = tx.description?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          tx.wallet.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // 2. Filter po tipu
+    const matchesType = filterType === "ALL" || tx.type === filterType;
+
+    // 3. Filter po kategoriji
+    const categoryName = tx.category?.name || "Ostalo";
+    const matchesCategory = filterCategory === "ALL" || categoryName === filterCategory;
+
+    return matchesSearch && matchesType && matchesCategory;
+  });
+
+  // Izvuci jedinstvene kategorije iz učitanih transakcija za Dropdown
+  const availableCategories = Array.from(new Set(transactions.map(t => t.category?.name || "Ostalo")));
+  // ---------------------------
+
+  const handleDelete = async (id: number, type: string) => {
+    if (type === 'TRANSFER') {
+        alert("Transferi se ne mogu brisati jer utiču na dva novčanika. Napravite kontra-transakciju.");
+        return;
+    }
+
+    if (!confirm("Da li ste sigurni? Iznos će biti vraćen u novčanik!")) return;
+
+    try {
+        const res = await fetch(`/api/transactions/${id}`, {
+            method: "DELETE"
+        });
+
+        if (res.ok) {
+            window.location.reload(); 
+        } else {
+            const errorData = await res.json();
+            alert("Greška: " + (errorData.error || "Nepoznata greška"));
+        }
+    } catch (error) {
+        console.error("Greška pri brisanju:", error);
+        alert("Došlo je do greške na serveru.");
+    }
+  };
+
   if (loading) return <p className="text-gray-400 text-center">Učitavanje transakcija...</p>;
 
-  if (transactions.length === 0) {
-    return <p className="text-gray-400 text-center">Nema zabeleženih transakcija.</p>;
-  }
-
   return (
-    <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-      <div className="p-4 border-b border-gray-700">
-        <h3 className="text-lg font-bold text-white">Istorija Transakcija</h3>
+    <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
+      
+      <div className="p-5 border-b border-gray-700">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <h3 className="text-lg font-bold text-white">Istorija Transakcija</h3>
+            
+            {/* --- KONTROLE ZA FILTRIRANJE --- */}
+            <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                {/* Pretraga */}
+                <input 
+                    type="text" 
+                    placeholder="🔍 Pretraži..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="bg-gray-900 border border-gray-600 text-white text-sm rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+
+                {/* Tip */}
+                <select 
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="bg-gray-900 border border-gray-600 text-white text-sm rounded-lg p-2 outline-none"
+                >
+                    <option value="ALL">Svi Tipovi</option>
+                    <option value="INCOME">Prihodi (+)</option>
+                    <option value="EXPENSE">Troškovi (-)</option>
+                    <option value="TRANSFER">Transferi</option>
+                </select>
+
+                {/* Kategorija */}
+                <select 
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="bg-gray-900 border border-gray-600 text-white text-sm rounded-lg p-2 outline-none"
+                >
+                    <option value="ALL">Sve Kategorije</option>
+                    {availableCategories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                </select>
+
+                {/* Reset Dugme (pojavljuje se samo ako je nešto filtrirano) */}
+                {(searchTerm || filterType !== "ALL" || filterCategory !== "ALL") && (
+                    <button 
+                        onClick={() => { setSearchTerm(""); setFilterType("ALL"); setFilterCategory("ALL"); }}
+                        className="text-red-400 text-xs hover:text-white transition"
+                    >
+                        ✖ Poništi
+                    </button>
+                )}
+            </div>
+            {/* ------------------------------- */}
+        </div>
       </div>
       
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm text-gray-300">
-          <thead className="bg-gray-700 text-gray-100 uppercase text-xs">
+          <thead className="bg-gray-900 text-gray-400 uppercase text-xs">
             <tr>
               <th className="px-6 py-3">Opis</th>
               <th className="px-6 py-3">Kategorija</th>
               <th className="px-6 py-3">Novčanik</th>
               <th className="px-6 py-3">Datum</th>
               <th className="px-6 py-3 text-right">Iznos</th>
+              <th className="px-6 py-3 text-center">Akcija</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
-            {Array.isArray(transactions) && transactions.map((tx) => (
-              <tr key={tx.id} className="hover:bg-gray-750 transition">
-                <td className="px-6 py-4 font-medium text-white">
-                  {tx.description || "Bez opisa"}
-                </td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-1 rounded bg-gray-600 text-xs text-white">
-                    {tx.category?.name || "Ostalo"}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-gray-400">{tx.wallet.name}</td>
-                <td className="px-6 py-4 text-gray-400">
-                  {new Date(tx.date).toLocaleDateString("sr-RS")}
-                </td>
-                <td className={`px-6 py-4 text-right font-bold ${
-                  tx.type === "INCOME" ? "text-green-400" : "text-red-400"
-                }`}>
-                  {tx.type === "INCOME" ? "+" : "-"}{tx.amount} RSD
-                </td>
-              </tr>
-            ))}
+            {filteredTransactions.length > 0 ? (
+                filteredTransactions.map((tx) => (
+                <tr key={tx.id} className="hover:bg-gray-700/50 transition duration-150">
+                    <td className="px-6 py-4 font-medium text-white">
+                    {tx.description || "Bez opisa"}
+                    </td>
+                    <td className="px-6 py-4">
+                    <span className="px-2 py-1 rounded bg-gray-700 border border-gray-600 text-xs text-gray-300">
+                        {tx.category?.name || "Ostalo"}
+                    </span>
+                    </td>
+                    <td className="px-6 py-4 text-gray-400">{tx.wallet.name}</td>
+                    <td className="px-6 py-4 text-gray-400">
+                    {new Date(tx.date).toLocaleDateString("sr-RS")}
+                    </td>
+                    <td className={`px-6 py-4 text-right font-bold ${
+                    tx.type === "INCOME" 
+                        ? "text-emerald-400" 
+                        : tx.type === "TRANSFER" 
+                            ? "text-blue-400" 
+                            : "text-rose-400"
+                    }`}>
+                    {tx.type === "INCOME" ? "+" : "-"}{tx.amount} RSD
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                        {tx.type !== "TRANSFER" ? (
+                            <button 
+                                onClick={() => handleDelete(tx.id, tx.type)}
+                                className="text-gray-500 hover:text-red-500 transition p-2 hover:bg-red-500/10 rounded-full"
+                                title="Obriši i vrati novac"
+                            >
+                                🗑️
+                            </button>
+                        ) : (
+                            <span className="text-gray-600 cursor-not-allowed" title="Transfer se ne briše">🔒</span>
+                        )}
+                    </td>
+                </tr>
+                ))
+            ) : (
+                <tr>
+                    <td colSpan={6} className="text-center py-8 text-gray-500">
+                        Nema transakcija za zadate filtere. 🔍
+                    </td>
+                </tr>
+            )}
           </tbody>
         </table>
       </div>

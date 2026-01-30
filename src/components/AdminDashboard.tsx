@@ -9,46 +9,58 @@ export default function AdminDashboard() {
 
   // 1. Učitaj sve korisnike
   const fetchUsers = async () => {
-    try {
-      // Pretpostavljam da je tvoj drug napravio ovu rutu, ako nije, napravićemo je
-      const res = await fetch("/api/admin/users"); 
-      if (res.ok) {
-        const data = await res.json();
-        setUsers(data);
-      }
-    } catch (error) {
-      console.error("Greška:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    try {
+      // 👇 DODAJ OVO 'cache: no-store'
+      const res = await fetch("/api/admin/users", { cache: "no-store" }); 
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Stigli korisnici:", data); // Proveri u konzoli šta stiže
+        setUsers(data);
+      }
+    } catch (error) {
+      console.error("Greška:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
   // 2. Funkcija za blokiranje
-  const toggleBlockStatus = async (userId: number, currentStatus: boolean) => {
-    try {
-      const res = await fetch("/api/admin/users/block", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-            userId, 
-            isBlocked: !currentStatus // Šaljemo suprotno od trenutnog (ako je false biće true)
-        }),
-      });
+  // 2. Funkcija za blokiranje (POPRAVLJENA)
+  const toggleBlockStatus = async (userId: number, currentStatus: boolean) => {
+    // Odmah sačuvamo novu vrednost
+    const newStatus = !currentStatus;
 
-      if (res.ok) {
-        // Osveži listu da se vidi promena
-        fetchUsers();
-      } else {
-        alert("Greška pri promeni statusa!");
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    try {
+      const res = await fetch("/api/admin/users/block", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            userId, 
+            isBlocked: newStatus 
+        }),
+      });
+
+      if (res.ok) {
+        // --- KLJUČNA IZMENA ---
+        // Umesto da čekamo spori fetchUsers(), mi ručno ažuriramo tabelu ODMAH:
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === userId ? { ...user, isBlocked: newStatus } : user
+          )
+        );
+        // -----------------------
+      } else {
+        alert("Greška pri promeni statusa! (Server vratio grešku)");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Greška u komunikaciji sa serverom.");
+    }
+  };
 
   if (loading) return <div className="p-8 text-white">Učitavanje korisnika...</div>;
 

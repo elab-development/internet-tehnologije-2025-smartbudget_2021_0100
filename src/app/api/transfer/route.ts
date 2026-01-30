@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+/*import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
 export async function POST(req: Request) {
@@ -48,6 +48,90 @@ export async function POST(req: Request) {
           date: new Date(date),
           walletId: parseInt(fromWalletId),
           categoryId: 1, // <--- O ovome ti pišem ispod
+          userId: userId
+        }
+      });
+
+      return transaction;
+    });
+
+    return NextResponse.json(result, { status: 201 });
+
+  } catch (error: any) {
+    console.error("Greška transfera:", error);
+    return NextResponse.json({ error: error.message || "Greška na serveru" }, { status: 500 });
+  }
+}*/
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { fromWalletId, toWalletId, amount, description, userId, date } = body;
+    const transferAmount = parseFloat(amount);
+
+    if (!fromWalletId || !toWalletId || !amount || !userId) {
+      return NextResponse.json({ error: "Nedostaju podaci" }, { status: 400 });
+    }
+
+    if (fromWalletId === toWalletId) {
+      return NextResponse.json({ error: "Ne možete slati novac na isti novčanik" }, { status: 400 });
+    }
+
+    // KORISTIMO TRANSAKCIJU BAZE
+    const result = await prisma.$transaction(async (tx) => {
+      
+      // 1. Proveri IZVORNI novčanik
+      const senderWallet = await tx.wallet.findUnique({ where: { id: parseInt(fromWalletId) } });
+      if (!senderWallet || senderWallet.userId !== userId) throw new Error("Izvorni novčanik ne postoji.");
+      if (parseFloat(senderWallet.balance.toString()) < transferAmount) throw new Error("Nemate dovoljno sredstava.");
+
+      // 2. Proveri CILJNI novčanik
+      const receiverWallet = await tx.wallet.findUnique({ where: { id: parseInt(toWalletId) } });
+      if (!receiverWallet) throw new Error("Ciljni novčanik ne postoji.");
+
+      // --- NOVI DEO: PAMETNO TRAŽENJE KATEGORIJE ---
+      // Pokušavamo da nađemo kategoriju "Transfer" ili "Prenos"
+      let transferCategory = await tx.category.findFirst({
+        where: { 
+            name: { in: ["Transfer", "Prenos", "Interni prenos"] } 
+        }
+      });
+
+      // Ako ne postoji, napravi je odmah!
+      if (!transferCategory) {
+        transferCategory = await tx.category.create({
+            data: {
+                name: "Transfer",
+                type: "EXPENSE", // Vodimo ga kao trošak tehnički, ili dodaj TRANSFER u enum ako imaš
+                userId: userId   // Vezujemo za korisnika ako je potrebno, ili ostavi null ako su sistemske
+            }
+        });
+      }
+      // ----------------------------------------------
+
+      // 3. Skini sa izvornog
+      await tx.wallet.update({
+        where: { id: parseInt(fromWalletId) },
+        data: { balance: { decrement: transferAmount } }
+      });
+
+      // 4. Dodaj na ciljni
+      await tx.wallet.update({
+        where: { id: parseInt(toWalletId) },
+        data: { balance: { increment: transferAmount } }
+      });
+
+      // 5. Zabeleži transakciju
+      const transaction = await tx.transaction.create({
+        data: {
+          amount: transferAmount,
+          type: "TRANSFER", // Ovo polje mora postojati u Transaction modelu (dodali smo ga ranije)
+          description: description || `Prenos na ${receiverWallet.name}`, 
+          date: new Date(date),
+          walletId: parseInt(fromWalletId),
+          categoryId: transferCategory.id, // <--- KORISTIMO PRAVI ID, A NE 1
           userId: userId
         }
       });

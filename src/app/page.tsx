@@ -5,6 +5,7 @@ import Link from "next/link";
 import AdminDashboard from "@/components/AdminDashboard"; 
 import TransactionHistory from "@/components/TransactionHistory";
 import DashboardStats from "@/components/DashboardStats";
+import DashboardCharts from "@/components/DashboardCharts"; // ✅ Uvezeno
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
@@ -71,7 +72,7 @@ export default function Home() {
   // 4. SCENARIO: OBIČAN KORISNIK (USER)
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6 pb-20">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8"> {/* Malo prošireno na max-w-7xl da grafikoni imaju mesta */}
         
         {/* ZAGLAVLJE */}
         <header className="border-b border-gray-800 pb-6 flex justify-between items-end">
@@ -87,16 +88,22 @@ export default function Home() {
         {/* GLAVNI SADRŽAJ - GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
-          {/* LEVO: DASHBOARD*/}
+          {/* LEVO: KARTICE (STATISTIKA) */}
           <div className="lg:col-span-1 h-full">
             <DashboardStats transactions={transactions} />
           </div>
 
-          {/* DESNO: ISTORIJA TRANSAKCIJA */}
-          <div className="lg:col-span-2">
+          {/* DESNO: GRAFIKONI I ISTORIJA */}
+          {/* Dodao sam 'space-y-8' da napravim razmak između grafika i tabele */}
+          <div className="lg:col-span-2 space-y-8">
             
+            {/* 👇 OVDE SMO UBACILI GRAFIKONE 👇 */}
+            <DashboardCharts />
+            
+            {/* TABELA ISTORIJE */}
             <TransactionHistory />
           </div>
+
         </div>
       </div>
     </div>
