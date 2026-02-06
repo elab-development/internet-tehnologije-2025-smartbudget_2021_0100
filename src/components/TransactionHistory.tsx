@@ -1,72 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-// Definišemo kako izgleda transakcija
-interface Transaction {
-  id: number;
-  amount: number;
-  description: string;
-  type: "INCOME" | "EXPENSE" | "TRANSFER";
-  date: string;
-  category?: { name: string; icon?: string };
-  wallet: { name: string };
+// Definišemo interfejs za Props (šta komponenta prima od roditelja)
+interface TransactionHistoryProps {
+  transactions: any[];
+  onRefresh: () => void;
 }
 
-export default function TransactionHistory() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function TransactionHistory({ transactions, onRefresh }: TransactionHistoryProps) {
+  // State za loading brisanja (opciono)
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // --- NOVA STANJA ZA FILTERE ---
+  // --- FILTERI ---
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("ALL"); // ALL, INCOME, EXPENSE, TRANSFER
+  const [filterType, setFilterType] = useState("ALL"); 
   const [filterCategory, setFilterCategory] = useState("ALL");
-  // -----------------------------
 
-  useEffect(() => {
-    const userJson = localStorage.getItem("user");
-    if (!userJson) return;
-    
-    const user = JSON.parse(userJson);
-
-    fetch(`/api/transactions?userId=${user.id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setTransactions(data);
-        } else {
-          setTransactions([]); 
-        }
-      })
-      .catch((err) => {
-        console.error("Greška:", err);
-        setTransactions([]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
-
-  // --- LOGIKA FILTRIRANJA ---
-  // Ovo se izvršava svaki put kad korisnik promeni filtere
+  // Filtriranje transakcija na osnovu state-a
   const filteredTransactions = transactions.filter((tx) => {
-    // 1. Pretraga po opisu (case insensitive - nije bitno malo/veliko slovo)
     const matchesSearch = tx.description?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          tx.wallet.name.toLowerCase().includes(searchTerm.toLowerCase());
-
-    // 2. Filter po tipu
+                          tx.wallet?.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === "ALL" || tx.type === filterType;
-
-    // 3. Filter po kategoriji
     const categoryName = tx.category?.name || "Ostalo";
     const matchesCategory = filterCategory === "ALL" || categoryName === filterCategory;
 
     return matchesSearch && matchesType && matchesCategory;
   });
 
-  // Izvuci jedinstvene kategorije iz učitanih transakcija za Dropdown
+  // Izvuci kategorije za filter dropdown
   const availableCategories = Array.from(new Set(transactions.map(t => t.category?.name || "Ostalo")));
-  // ---------------------------
 
   const handleDelete = async (id: number, type: string) => {
     if (type === 'TRANSFER') {
@@ -74,7 +37,7 @@ export default function TransactionHistory() {
         return;
     }
 
-    if (!confirm("Da li ste sigurni? Iznos će biti vraćen u novčanik!")) return;
+    setDeletingId(id);
 
     try {
         const res = await fetch(`/api/transactions/${id}`, {
@@ -82,7 +45,8 @@ export default function TransactionHistory() {
         });
 
         if (res.ok) {
-            window.location.reload(); 
+            // Uspešno obrisano -> Zovemo funkciju iz page.tsx da osveži podatke
+            onRefresh();
         } else {
             const errorData = await res.json();
             alert("Greška: " + (errorData.error || "Nepoznata greška"));
@@ -90,10 +54,10 @@ export default function TransactionHistory() {
     } catch (error) {
         console.error("Greška pri brisanju:", error);
         alert("Došlo je do greške na serveru.");
+    } finally {
+        setDeletingId(null);
     }
   };
-
-  if (loading) return <p className="text-gray-400 text-center">Učitavanje transakcija...</p>;
 
   return (
     <div className="bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-700">
@@ -102,9 +66,8 @@ export default function TransactionHistory() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <h3 className="text-lg font-bold text-white">Istorija Transakcija</h3>
             
-            {/* --- KONTROLE ZA FILTRIRANJE --- */}
             <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                {/* Pretraga */}
+                {/* PRETRAGA */}
                 <input 
                     type="text" 
                     placeholder="🔍 Pretraži..." 
@@ -113,7 +76,7 @@ export default function TransactionHistory() {
                     className="bg-gray-900 border border-gray-600 text-white text-sm rounded-lg p-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                 />
 
-                {/* Tip */}
+                {/* FILTER PO TIPU */}
                 <select 
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
@@ -125,7 +88,7 @@ export default function TransactionHistory() {
                     <option value="TRANSFER">Transferi</option>
                 </select>
 
-                {/* Kategorija */}
+                {/* FILTER PO KATEGORIJI */}
                 <select 
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
@@ -133,11 +96,11 @@ export default function TransactionHistory() {
                 >
                     <option value="ALL">Sve Kategorije</option>
                     {availableCategories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
+                        <option key={cat as string} value={cat as string}>{cat as string}</option>
                     ))}
                 </select>
 
-                {/* Reset Dugme (pojavljuje se samo ako je nešto filtrirano) */}
+                {/* DUGME ZA RESET */}
                 {(searchTerm || filterType !== "ALL" || filterCategory !== "ALL") && (
                     <button 
                         onClick={() => { setSearchTerm(""); setFilterType("ALL"); setFilterCategory("ALL"); }}
@@ -147,7 +110,6 @@ export default function TransactionHistory() {
                     </button>
                 )}
             </div>
-            {/* ------------------------------- */}
         </div>
       </div>
       
@@ -175,7 +137,7 @@ export default function TransactionHistory() {
                         {tx.category?.name || "Ostalo"}
                     </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-400">{tx.wallet.name}</td>
+                    <td className="px-6 py-4 text-gray-400">{tx.wallet?.name}</td>
                     <td className="px-6 py-4 text-gray-400">
                     {new Date(tx.date).toLocaleDateString("sr-RS")}
                     </td>
@@ -192,10 +154,11 @@ export default function TransactionHistory() {
                         {tx.type !== "TRANSFER" ? (
                             <button 
                                 onClick={() => handleDelete(tx.id, tx.type)}
+                                disabled={deletingId === tx.id}
                                 className="text-gray-500 hover:text-red-500 transition p-2 hover:bg-red-500/10 rounded-full"
-                                title="Obriši i vrati novac"
+                                title="Obriši"
                             >
-                                🗑️
+                                {deletingId === tx.id ? "..." : "🗑️"}
                             </button>
                         ) : (
                             <span className="text-gray-600 cursor-not-allowed" title="Transfer se ne briše">🔒</span>

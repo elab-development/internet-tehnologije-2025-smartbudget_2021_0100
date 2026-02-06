@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import AdminDashboard from "@/components/AdminDashboard"; 
+// Uvozimo komponente
+import AdminDashboard from "@/components/AdminDashboard";
 import TransactionHistory from "@/components/TransactionHistory";
 import DashboardStats from "@/components/DashboardStats";
-import DashboardCharts from "@/components/DashboardCharts"; // ✅ Uvezeno
+import DashboardCharts from "@/components/DashboardCharts"; 
+import Footer from "@/components/Footer";
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
@@ -13,15 +15,26 @@ export default function Home() {
   const [transactions, setTransactions] = useState<any[]>([]);
 
   useEffect(() => {
-    const userJson = localStorage.getItem("user");
-    if (userJson) {
-      const parsedUser = JSON.parse(userJson);
-      setUser(parsedUser);
-      // Odmah učitavamo transakcije
-      fetchTransactions(parsedUser.id);
-    } else {
-      setLoading(false);
-    }
+    const checkUser = () => {
+      const userJson = localStorage.getItem("user");
+      if (userJson) {
+        try {
+            const parsedUser = JSON.parse(userJson);
+            setUser(parsedUser);
+            fetchTransactions(parsedUser.id);
+        } catch(e) {
+            console.error(e);
+            setLoading(false);
+        }
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    };
+
+    checkUser();
+    window.addEventListener("storage", checkUser);
+    return () => window.removeEventListener("storage", checkUser);
   }, []);
 
   const fetchTransactions = async (userId: number) => {
@@ -32,7 +45,7 @@ export default function Home() {
         setTransactions(data);
       }
     } catch (error) {
-      console.error(error);
+      console.error("Greška pri učitavanju transakcija:", error);
     } finally {
       setLoading(false);
     }
@@ -42,7 +55,9 @@ export default function Home() {
     return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Učitavanje...</div>;
   }
 
-  // 2. SCENARIO: GOST (Nije ulogovan)
+  // ---------------------------------------------------------
+  // SCENARIO 1: GOST -> LANDING PAGE
+  // ---------------------------------------------------------
   if (!user) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white p-4 text-center">
@@ -50,13 +65,19 @@ export default function Home() {
           SmartBudget 💰
         </h1>
         <p className="text-xl mb-12 text-gray-300 max-w-2xl leading-relaxed">
-          Preuzmite kontrolu nad svojim novcem.
+          Preuzmite kontrolu nad svojim novcem. Pratite troškove, štedite pametno i planirajte budućnost.
         </p>
-        <div className="flex gap-6">
-          <Link href="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full transition shadow-lg">
+        <div className="flex gap-6 justify-center">
+          <Link 
+            href="/login" 
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-10 rounded-full transition shadow-lg shadow-blue-900/20"
+          >
             Prijavi se
           </Link>
-          <Link href="/register" className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-4 px-10 rounded-full transition">
+          <Link 
+            href="/register" 
+            className="bg-gray-800 hover:bg-gray-700 text-white font-bold py-4 px-10 rounded-full transition border border-gray-700"
+          >
             Registracija
           </Link>
         </div>
@@ -64,48 +85,57 @@ export default function Home() {
     );
   }
 
-  // 3. SCENARIO: ADMIN
+  // ---------------------------------------------------------
+  // SCENARIO 2: ADMIN -> ADMIN PANEL
+  // ---------------------------------------------------------
   if (user.role === 'ADMIN') {
     return <AdminDashboard />;
   }
 
-  // 4. SCENARIO: OBIČAN KORISNIK (USER)
+  // ---------------------------------------------------------
+  // SCENARIO 3: KORISNIK -> DASHBOARD (STARI RASPORED)
+  // ---------------------------------------------------------
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-6 pb-20">
-      <div className="max-w-7xl mx-auto space-y-8"> {/* Malo prošireno na max-w-7xl da grafikoni imaju mesta */}
-        
-        {/* ZAGLAVLJE */}
-        <header className="border-b border-gray-800 pb-6 flex justify-between items-end">
-            <div>
-                <h1 className="text-3xl font-bold">Zdravo, {user.name}! 👋</h1>
-                <p className="text-gray-400 mt-1">Evo tvog finansijskog preseka.</p>
-            </div>
-            <Link href="/transactions/add" className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-900/20 transition hidden sm:block">
-                + Nova Transakcija
-            </Link>
-        </header>
-
-        {/* GLAVNI SADRŽAJ - GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      
+      <div className="flex-grow p-6">
+        <div className="max-w-7xl mx-auto space-y-8">
           
-          {/* LEVO: KARTICE (STATISTIKA) */}
-          <div className="lg:col-span-1 h-full">
-            <DashboardStats transactions={transactions} />
-          </div>
+          {/* HEADER */}
+          <header className="border-b border-gray-800 pb-6">
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-300">
+                Zdravo, {user.name}!
+            </h1>
+            <p className="text-gray-400 mt-1">Evo tvog finansijskog preseka.</p>
+          </header>
 
-          {/* DESNO: GRAFIKONI I ISTORIJA */}
-          {/* Dodao sam 'space-y-8' da napravim razmak između grafika i tabele */}
-          <div className="lg:col-span-2 space-y-8">
+          {/* GRID SISTEM: 1/3 Levo, 2/3 Desno */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* 👇 OVDE SMO UBACILI GRAFIKONE 👇 */}
-            <DashboardCharts />
-            
-            {/* TABELA ISTORIJE */}
-            <TransactionHistory />
+            {/* LEVA KOLONA: Statistika (Kartice) */}
+            <div className="lg:col-span-1 h-full">
+              <DashboardStats transactions={transactions} />
+            </div>
+
+            {/* DESNA KOLONA: Grafikoni + Istorija */}
+            <div className="lg:col-span-2 space-y-8">
+               {/* Prvo Grafikoni */}
+               <DashboardCharts transactions={transactions} />
+               
+               {/* Ispod njih Tabela */}
+               <TransactionHistory 
+                  transactions={transactions} 
+                  onRefresh={() => fetchTransactions(user.id)} 
+               />
+            </div>
+
           </div>
 
         </div>
       </div>
+
+      <Footer />
+      
     </div>
   );
 }

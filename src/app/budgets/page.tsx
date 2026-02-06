@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
 
 export default function BudgetsPage() {
   const [budgets, setBudgets] = useState<any[]>([]);
@@ -9,6 +8,9 @@ export default function BudgetsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [user, setUser] = useState<any>(null);
+
+  // NOVO: State za brisanje (čuvanje ID-a koji se briše)
+  const [budgetToDelete, setBudgetToDelete] = useState<number | null>(null);
 
   // Forma state
   const [amount, setAmount] = useState("");
@@ -28,16 +30,10 @@ export default function BudgetsPage() {
 
   const fetchData = async (userId: number) => {
     try {
-      // Učitaj budžete (GET)
       const resBudgets = await fetch(`/api/budgets?userId=${userId}`);
       const budgetsData = await resBudgets.json();
       
-      // Učitaj kategorije (za dropdown u modalu) - koristimo postojeći API
-      // Pretpostavljam da već imaš API za transakcije koji vraća kategorije, 
-      // ili možemo napraviti novi. Za sad, ako ovo pukne, moramo napraviti rutu za kategorije.
-      // Probaćemo da izvučemo kategorije iz transakcija ili ako imaš posebnu rutu.
-      // AJDE DA KORISTIMO OVO: /api/categories ako postoji, ako ne, koristićemo hardkodovane za test.
-      const resCats = await fetch(`/api/categories?userId=${userId}`); // Nadam se da ovo imaš
+      const resCats = await fetch(`/api/categories?userId=${userId}`); 
       if(resCats.ok) {
           const catsData = await resCats.json();
           setCategories(catsData);
@@ -64,7 +60,7 @@ export default function BudgetsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount,
-          categoryId: selectedCategory || null, // Ako je prazno, šaljemo null (Ukupan budžet)
+          categoryId: selectedCategory || null,
           userId: user.id
         }),
       });
@@ -73,7 +69,7 @@ export default function BudgetsPage() {
         setShowModal(false);
         setAmount("");
         setSelectedCategory("");
-        fetchData(user.id); // Osveži prikaz
+        fetchData(user.id);
       } else {
         const err = await res.json();
         alert(err.error || "Greška");
@@ -83,25 +79,26 @@ export default function BudgetsPage() {
     }
   };
 
-  // 3. Brisanje budžeta
-  // 3. Brisanje budžeta (POPRAVLJENO)
-  const handleDelete = async (id: number) => {
-    if (!confirm("Da li ste sigurni da želite da obrišete ovaj budžet?")) return;
+  // 3. Iniciranje brisanja (Samo otvara modal)
+  const openDeleteModal = (id: number) => {
+    setBudgetToDelete(id);
+  };
+
+  // 4. Potvrda brisanja (Zove API)
+  const confirmDelete = async () => {
+    if (!budgetToDelete) return;
     
     try {
-        console.log("Šaljem zahtev za brisanje na: /api/budgets/" + id); // Provera
-        
-        const res = await fetch(`/api/budgets/${id}`, { 
+        const res = await fetch(`/api/budgets/${budgetToDelete}`, { 
             method: "DELETE" 
         });
 
         if (res.ok) {
-            // Uspešno
             fetchData(user.id);
+            setBudgetToDelete(null); // Zatvori modal
         } else {
-            // Greška (npr. 404 ili 500)
             const errorData = await res.json();
-            alert(`Greška: ${errorData.error || "Nepoznata greška"} (Status: ${res.status})`);
+            alert(`Greška: ${errorData.error || "Nepoznata greška"}`);
         }
     } catch (error) {
         console.error("Mrežna greška:", error);
@@ -153,9 +150,10 @@ export default function BudgetsPage() {
                         </h3>
                         <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">Mesečni Limit</p>
                     </div>
+                    {/* DUGME ZA BRISANJE OTVARA MODAL */}
                     <button 
-                        onClick={() => handleDelete(budget.id)}
-                        className="text-gray-500 hover:text-red-400 transition"
+                        onClick={() => openDeleteModal(budget.id)}
+                        className="text-gray-500 hover:text-red-400 transition bg-transparent border-0 cursor-pointer"
                     >
                         🗑️
                     </button>
@@ -199,7 +197,7 @@ export default function BudgetsPage() {
         </div>
       </div>
 
-      {/* MODAL ZA DODAVANJE */}
+      {/* MODAL ZA KREIRANJE */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-gray-800 p-8 rounded-3xl w-full max-w-md border border-gray-700 shadow-2xl">
@@ -214,8 +212,10 @@ export default function BudgetsPage() {
                         className="w-full bg-gray-900 border border-gray-700 text-white rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none"
                     >
                         <option value="">-- Ukupan Mesečni Budžet --</option>
-                        {categories.map((cat) => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        {categories
+                            .filter(cat => cat.type === "EXPENSE")
+                            .map((cat) => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
                         ))}
                     </select>
                     <p className="text-xs text-gray-500 mt-1">Ostavite prazno ako želite limit za SVE troškove.</p>
@@ -252,6 +252,39 @@ export default function BudgetsPage() {
           </div>
         </div>
       )}
+
+      {/* MODAL ZA BRISANJE */}
+      {budgetToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+           <div className="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-sm p-6 transform transition-all scale-100">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                  🗑️
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Brisanje limita</h3>
+                <p className="text-gray-400 text-sm mb-6">
+                  Da li ste sigurni da želite da obrišete ovaj budžet? Ova akcija se ne može poništiti.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setBudgetToDelete(null)}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 transition"
+                >
+                  Odustani
+                </button>
+                <button 
+                  onClick={confirmDelete}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-medium text-white bg-red-600 hover:bg-red-500 shadow-lg shadow-red-900/20 transition"
+                >
+                  Obriši
+                </button>
+              </div>
+           </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -1,14 +1,44 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function Footer() {
   const pathname = usePathname();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkUser = () => {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    };
+
+    checkUser();
+    window.addEventListener("storage", checkUser);
+    return () => window.removeEventListener("storage", checkUser);
+  }, []);
+
+  if (loading) return null;
 
   // Sakrij footer na stranicama za logovanje i registraciju
   if (pathname === "/login" || pathname === "/register") {
     return null;
   }
+
+  // Sakrij footer na početnoj strani ako korisnik NIJE ulogovan (Landing page)
+  if (pathname === "/" && !user) {
+    return null;
+  }
+
+  // Provera da li je Admin
+  const isAdmin = user?.role === "ADMIN";
 
   return (
     <footer className="bg-gray-900 border-t border-gray-800 text-gray-400 py-8 mt-auto">
@@ -26,17 +56,45 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Kolona 2: Linkovi (Korisno za profesore da vide strukturu) */}
+          {/* Kolona 2: Navigacija (SADA SADRŽI SVE LINKOVE KAO NAVBAR) */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Navigacija</h3>
+            <h3 className="text-white font-bold text-lg mb-4">Brzi Linkovi</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="/" className="hover:text-blue-400 transition">Početna</a></li>
-              <li><a href="/wallets" className="hover:text-blue-400 transition">Moji Novčanici</a></li>
-              <li><a href="/transactions/add" className="hover:text-blue-400 transition">Nova Transakcija</a></li>
+              <li>
+                <Link href="/" className="hover:text-blue-400 transition">
+                  Početna
+                </Link>
+              </li>
+
+              {/* Prikazujemo ove linkove SAMO ako nije Admin i ako je ulogovan */}
+              {!isAdmin && user && (
+                <>
+                  <li>
+                    <Link href="/wallets" className="hover:text-blue-400 transition">
+                      Moji Novčanici
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/budgets" className="hover:text-blue-400 transition">
+                      Budžeti
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/transfer" className="hover:text-blue-400 transition">
+                      Prenos Novca
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/transactions/add" className="hover:text-blue-400 transition">
+                      Nova Transakcija
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
 
-          {/* Kolona 3: Autori */}
+          {/* Kolona 3: Studenti */}
           <div>
             <h3 className="text-white font-bold text-lg mb-4">Studenti</h3>
             <div className="text-sm space-y-1 text-gray-500">

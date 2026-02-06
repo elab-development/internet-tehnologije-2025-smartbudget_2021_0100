@@ -125,7 +125,7 @@ export default function DashboardStats({ transactions }: { transactions: Transac
 
       {/* 3. REZULTAT (USTEDA) */}
       <div className={`mt-6 p-4 rounded-xl border ${stats.savings >= 0 ? 'bg-green-900/20 border-green-800' : 'bg-red-900/20 border-red-800'}`}>
-         <p className="text-gray-400 text-xs mb-1">Trenutni rezultat</p>
+         <p className="text-gray-400 text-xs mb-1">Trenutno stanje</p>
          <p className={`text-xl font-bold ${stats.savings >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {stats.savings >= 0 ? 'U plusu si' : 'U minusu si'}: {Math.abs(stats.savings).toLocaleString()} RSD
          </p>
