@@ -27,7 +27,7 @@ export default function AdminDashboard() {
   const toggleBlockUser = async (userId: number, currentStatus: boolean) => {
     try {
       const res = await fetch("/api/admin/users/block", {
-        method: "POST",
+        method: "PUT", // 👈 OVO JE BILO "POST", PROMENI U "PUT"
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, isBlocked: !currentStatus }),
       });
