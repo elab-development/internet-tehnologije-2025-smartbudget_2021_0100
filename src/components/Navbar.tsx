@@ -47,12 +47,23 @@ export default function Navbar() {
     setShowLogoutModal(true);
   };
 
-  const confirmLogout = () => {
+  // Moraš dodati 'async' ispred funkcije jer koristimo 'await'
+  const confirmLogout = async () => {
+    
+    // 1. POZIV BACKEND RUTE (Ovo smo dodali zbog zahteva projekta)
+    try {
+        await fetch("/api/logout", { method: "POST" });
+    } catch (error) {
+        console.error("Greška na serveru pri odjavi (zanemarljivo):", error);
+    }
+
+    // 2. BRISANJE LOKALNIH PODATAKA (Tvoj postojeći kod)
     localStorage.removeItem("user");
     setUser(null);
     setShowLogoutModal(false);
     
-    // 👇👇👇 KLJUČNA PROMENA: OVO OSVEŽAVA STRANICU DA BI SE PRIKAZAO LANDING PAGE
+    // 3. PREUSMERAVANJE (Tvoj postojeći kod)
+    // Ovo je super jer osvežava celu aplikaciju i briše sve keširane podatke
     window.location.href = "/";
   };
 
