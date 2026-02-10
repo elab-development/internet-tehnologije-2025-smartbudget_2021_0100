@@ -13,18 +13,16 @@ export async function DELETE(
       return NextResponse.json({ error: "Nevalidan ID" }, { status: 400 });
     }
 
-    // 1. Prvo moramo naći transakciju da vidimo KOLIKO para i KOJI tip
+    // prvo moramo naci transakciju da vidimo koliko je para i koji je tip
     const transaction = await prisma.transaction.findUnique({
       where: { id: transactionId },
-      include: { wallet: true } // Treba nam i novčanik da ažuriramo stanje
+      include: { wallet: true } // Treba nam i novcanik da azuriramo stanje
     });
 
     if (!transaction) {
       return NextResponse.json({ error: "Transakcija ne postoji" }, { status: 404 });
     }
 
-    // Sigurnosna provera: Transferi su komplikovani za brisanje (jer utiču na 2 novčanika)
-    // Za sada ćemo dozvoliti samo brisanje Prihoda i Troškova.
     if (transaction.type === "TRANSFER") {
       return NextResponse.json(
         { error: "Transferi se ne mogu brisati. Napravite kontra-transakciju." }, 
@@ -32,25 +30,24 @@ export async function DELETE(
       );
     }
 
-    // 2. KORISTIMO TRANSAKCIJU BAZE (Sve ili ništa)
+    // koristimo transakciju baze, sve ili nista
     await prisma.$transaction(async (tx) => {
       
-      // LOGIKA VRAĆANJA NOVCA
       if (transaction.type === "EXPENSE") {
-        // Ako brišemo trošak, pare se VRAĆAJU u novčanik (+)
+        // ako brisemo trosak pare se vracaju u novcanik
         await tx.wallet.update({
           where: { id: transaction.walletId },
           data: { balance: { increment: transaction.amount } }
         });
       } else if (transaction.type === "INCOME") {
-        // Ako brišemo prihod, pare se ODUZIMAJU iz novčanika (-)
+        // ako brisemo prihod pare se oduzimaju iz novcanika
         await tx.wallet.update({
           where: { id: transaction.walletId },
           data: { balance: { decrement: transaction.amount } }
         });
       }
 
-      // 3. Konačno brišemo zapis
+      // brisemo zapis
       await tx.transaction.delete({
         where: { id: transactionId }
       });

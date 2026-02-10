@@ -15,11 +15,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Korisnik ne postoji.' }, { status: 401 });
     }
 
-    // 1. PROVERA DA LI JE BLOKIRAN (NOVO!)
+    // proveravamo da li je korisnik blokiran
     if (user.isBlocked) {
       return NextResponse.json(
         { message: 'Vaš nalog je blokiran. Kontaktirajte administratora.' }, 
-        { status: 403 } // 403 znači Forbidden (Zabranjeno)
+        { status: 403 } // 403 znaci zabranjeno
       );
     }
 
@@ -36,7 +36,7 @@ export async function POST(req: Request) {
             id: user.id, 
             email: user.email, 
             name: user.name, 
-            role: user.role // Vraćamo i ulogu
+            role: user.role // Vracamo i ulogu
         } 
       },
       { status: 200 }

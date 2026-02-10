@@ -3,14 +3,14 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // 1. Provera da li već imamo kategorije
+    // provera da li vec imamo kategorije
     const count = await prisma.category.count();
     
     if (count > 0) {
       return NextResponse.json({ message: 'Kategorije već postoje! Nema potrebe za dodavanjem.' });
     }
 
-    // 2. Ako je baza prazna, ubaci ove kategorije
+    // ako je baza prazna, ubaci ove kategorije
     await prisma.category.createMany({
       data: [
         { name: 'Plata', type: 'INCOME' },

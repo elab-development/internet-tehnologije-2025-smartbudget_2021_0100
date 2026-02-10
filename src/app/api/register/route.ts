@@ -4,11 +4,11 @@ import bcrypt from 'bcrypt';
 
 export async function POST(req: Request) {
   try {
-    // 1. Čitamo podatke koje je korisnik poslao
+    // citamo podatke koje je korisnik poslao
     const body = await req.json();
     const { email, name, password } = body;
 
-    // 2. Provera: Da li su sva polja tu?
+    // provera da li su sva polja tu
     if (!email || !name || !password) {
       return NextResponse.json(
         { message: 'Nedostaju podaci (email, ime ili lozinka)' },
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Provera: Da li email već postoji u bazi?
+    // provera da li email već postoji u bazi
     const existingUser = await prisma.user.findUnique({
       where: { email: email },
     });
@@ -28,20 +28,20 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4. "Soljenje" lozinke (Hashing) - Sigurnosni zahtev profesora
+    // hesovanje lozinke
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 5. Upis u bazu
+    // upis u bazu
     const newUser = await prisma.user.create({
       data: {
         email,
         name,
         password: hashedPassword,
-        role: 'USER', // Po defaultu je običan korisnik
+        role: 'USER', // po defaultu je obican korisnik
       },
     });
 
-    // 6. Vraćamo uspeh (bez slanja lozinke nazad!)
+    // vracamo uspeh bez slanja lozinke nazad
     return NextResponse.json(
       { message: 'Uspešna registracija!', user: { email: newUser.email, name: newUser.name } },
       { status: 201 }

@@ -9,7 +9,7 @@ export async function DELETE(
     const params = await props.params;
     const id = parseInt(params.id);
 
-    // Prvo proveri da li je sistemska
+    // prvo provera da li je sistemska
     const category = await prisma.category.findUnique({ where: { id } });
     
     if (!category) return NextResponse.json({ error: "Nema je" }, { status: 404 });

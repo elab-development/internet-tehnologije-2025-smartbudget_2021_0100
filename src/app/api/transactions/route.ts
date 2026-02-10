@@ -6,7 +6,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { amount, type, date, description, walletId, categoryId } = body;
 
-    // 1. Provera podataka
+    // provera podataka
     if (!amount || !walletId || !categoryId || !type) {
       return NextResponse.json(
         { error: "Fale obavezni podaci" },
@@ -14,11 +14,9 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Transakcija baze
-    // DODALI SMO ": any" PORED tx DA SKLONIMO CRVENO
+    
     const result = await prisma.$transaction(async (tx: any) => {
       
-      // KORAK A: Prvo nađemo novčanik da vidimo čiji je
       const wallet = await tx.wallet.findUnique({
         where: { id: parseInt(walletId) }
       });
@@ -27,7 +25,6 @@ export async function POST(request: Request) {
         throw new Error("Novčanik ne postoji!");
       }
 
-      // KORAK B: Kreiramo transakciju
       const transaction = await tx.transaction.create({
         data: {
           amount: parseFloat(amount),
@@ -40,7 +37,6 @@ export async function POST(request: Request) {
         },
       });
 
-      // KORAK C: Ažuriramo stanje novčanika
       if (type === "INCOME") {
         await tx.wallet.update({
           where: { id: parseInt(walletId) },
@@ -66,14 +62,13 @@ export async function POST(request: Request) {
   }
 }
 
-// --- GET METODA ---
+// get metoda
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
 
     if (!userId) {
-      // Ako nema ID-a, vratimo prazan niz da ne puca Front
       return NextResponse.json([], { status: 200 });
     }
 
@@ -95,7 +90,6 @@ export async function GET(req: Request) {
 
   } catch (error) {
     console.error("Greška pri učitavanju:", error);
-    // BITNA IZMENA: Vraćamo prazan niz [] umesto greške, da ne pukne .map()
     return NextResponse.json([], { status: 500 });
   }
 }

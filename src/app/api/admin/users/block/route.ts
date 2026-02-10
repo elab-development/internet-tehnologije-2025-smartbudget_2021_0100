@@ -6,15 +6,15 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { userId, isBlocked } = body;
 
-    // 1. Provera podataka
+    // provera podataka
     if (!userId) {
       return NextResponse.json({ error: "Nedostaje userId" }, { status: 400 });
     }
 
-    // 2. Ažuriranje u bazi
+    // azuriranje podataka
     const updatedUser = await prisma.user.update({
       where: { 
-        id: Number(userId) // Pretvaramo u broj za svaki slučaj
+        id: Number(userId)
       },
       data: { 
         isBlocked: isBlocked 

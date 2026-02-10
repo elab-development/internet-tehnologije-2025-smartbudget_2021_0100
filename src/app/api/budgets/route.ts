@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
-// GET: Vraća listu budžeta sa IZRAČUNATOM potrošnjom za trenutni mesec
+// GET: vraca listu budzeta sa izracunatom funkcijom za sledeci mesec
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -11,32 +11,31 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Nedostaje userId" }, { status: 400 });
     }
 
-    // 1. Odredi početak i kraj trenutnog meseca
+    // odredjujemo pocetak i kraj trenutnog meseca
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    // 2. Učitaj budžete korisnika
+    // ucitaj budzete korisnika
     const budgets = await prisma.budget.findMany({
       where: { userId: Number(userId) },
-      include: { category: true } // Da vidimo ime kategorije
+      include: { category: true } // da vidimo ime kategorije
     });
 
-    // 3. ZA SVAKI BUDŽET: Izračunaj koliko je već potrošeno
-    // Ovo je ključno za progress bar!
+    // za svaki budzet izracunava koliko je vec potroseno
     const budgetsWithSpent = await Promise.all(budgets.map(async (budget) => {
       
       const spentAgg = await prisma.transaction.aggregate({
         _sum: { amount: true },
         where: {
           userId: Number(userId),
-          type: "EXPENSE", // Gledamo samo troškove
+          type: "EXPENSE",
           date: {
             gte: startOfMonth, // Od prvog u mesecu
             lte: endOfMonth    // Do kraja meseca
           },
-          // Ako je budžet za specifičnu kategoriju, filtriraj po njoj.
-          // Ako je budget.categoryId null, to znači "Ukupan budžet" (sve kategorije).
+          // Ako je budzet za specificnu kategoriju, filtriraj po njoj,
+          // ako je budget.categoryId null, to znaci "Ukupan budzet" (sve kategorije).
           ...(budget.categoryId ? { categoryId: budget.categoryId } : {})
         }
       });
@@ -47,7 +46,7 @@ export async function GET(req: Request) {
 
       return {
         ...budget,
-        spent,       // Koliko je potrošeno
+        spent,       // Koliko je potroseno
         remaining: limit - spent, // Koliko je ostalo
         percentage   // Procenat za progress bar
       };
@@ -61,7 +60,7 @@ export async function GET(req: Request) {
   }
 }
 
-// POST: Kreira novi budžet
+// POST: Kreira novi budzet
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -71,11 +70,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Iznos i korisnik su obavezni" }, { status: 400 });
     }
 
-    // Provera da li već postoji budžet za tu kategoriju
+    // Provera da li vec posto budzet za tu kategoriju
     const existingBudget = await prisma.budget.findFirst({
         where: {
             userId: Number(userId),
-            categoryId: categoryId ? Number(categoryId) : null // null znači "Ukupan budžet"
+            categoryId: categoryId ? Number(categoryId) : null // null znači ukupan budzet
         }
     });
 

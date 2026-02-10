@@ -13,7 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// MIGRACIJA 1: Osnovni entiteti
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
@@ -40,7 +39,6 @@ model Wallet {
   transactions Transaction[]
 }
 
-// MIGRACIJA 2: Dodavanje finansijskih modula
 model Category {
   id       Int     @id @default(autoincrement())
   name     String

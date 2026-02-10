@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import  prisma  from "@/lib/prisma";
 
-// 1. GET: Vraća novčanike, ali traži ID korisnika u URL-u
+// get metoda
 export async function GET(request: Request) {
   try {
-    // Uzimamo userId iz URL-a (npr. /api/wallets?userId=5)
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
 
@@ -14,7 +13,7 @@ export async function GET(request: Request) {
 
     const wallets = await prisma.wallet.findMany({
       where: {
-        userId: parseInt(userId), // Pretvaramo string "5" u broj 5
+        userId: parseInt(userId),
       },
     });
 
@@ -27,11 +26,11 @@ export async function GET(request: Request) {
   }
 }
 
-// 2. POST: Kreira novčanik za određenog korisnika
+// kreiramo novcanik za odredjenog korisnika
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, balance, currency, userId } = body; // Čekamo i userId
+    const { name, balance, currency, userId } = body;
 
     if (!name || !userId) {
       return NextResponse.json(
@@ -45,7 +44,7 @@ export async function POST(request: Request) {
         name,
         balance: balance || 0,
         currency: currency || "RSD",
-        userId: parseInt(userId), // Vezujemo za pravog korisnika!
+        userId: parseInt(userId),
       },
     });
 
@@ -59,7 +58,7 @@ export async function POST(request: Request) {
 }
 
 
-// 3. DELETE: Briše novčanik na osnovu ID-ja iz URL-a
+// delete funkcija
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
