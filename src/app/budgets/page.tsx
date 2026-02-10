@@ -9,14 +9,12 @@ export default function BudgetsPage() {
   const [showModal, setShowModal] = useState(false);
   const [user, setUser] = useState<any>(null);
 
-  // NOVO: State za brisanje (čuvanje ID-a koji se briše)
   const [budgetToDelete, setBudgetToDelete] = useState<number | null>(null);
 
-  // Forma state
   const [amount, setAmount] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  // 1. Učitavanje korisnika, budžeta i kategorija
+  // ucitavanje korisnika, budzeta i kategorija
   useEffect(() => {
     const userJson = localStorage.getItem("user");
     if (!userJson) {
@@ -49,7 +47,7 @@ export default function BudgetsPage() {
     }
   };
 
-  // 2. Kreiranje budžeta
+  // kreiranje budzeta
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -79,12 +77,12 @@ export default function BudgetsPage() {
     }
   };
 
-  // 3. Iniciranje brisanja (Samo otvara modal)
+  // iniciranje brisanja
   const openDeleteModal = (id: number) => {
     setBudgetToDelete(id);
   };
 
-  // 4. Potvrda brisanja (Zove API)
+  // potvrda za brisanje
   const confirmDelete = async () => {
     if (!budgetToDelete) return;
     
@@ -95,7 +93,7 @@ export default function BudgetsPage() {
 
         if (res.ok) {
             fetchData(user.id);
-            setBudgetToDelete(null); // Zatvori modal
+            setBudgetToDelete(null);
         } else {
             const errorData = await res.json();
             alert(`Greška: ${errorData.error || "Nepoznata greška"}`);
@@ -132,7 +130,7 @@ export default function BudgetsPage() {
           </button>
         </div>
 
-        {/* GRID KARTICA */}
+        {/* grid kartica */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {budgets.length === 0 ? (
             <div className="col-span-2 text-center py-10 bg-gray-800 rounded-2xl border border-gray-700 border-dashed">
@@ -142,7 +140,7 @@ export default function BudgetsPage() {
             budgets.map((budget) => (
               <div key={budget.id} className="bg-gray-800 rounded-2xl p-6 border border-gray-700 shadow-xl relative overflow-hidden group">
                 
-                {/* Header Kartice */}
+                {/* header kartica */}
                 <div className="flex justify-between items-start mb-4 relative z-10">
                     <div>
                         <h3 className="text-xl font-bold text-white">
@@ -150,7 +148,7 @@ export default function BudgetsPage() {
                         </h3>
                         <p className="text-xs text-gray-400 uppercase tracking-wider mt-1">Mesečni Limit</p>
                     </div>
-                    {/* DUGME ZA BRISANJE OTVARA MODAL */}
+                    {/* dugme za brisanje */}
                     <button 
                         onClick={() => openDeleteModal(budget.id)}
                         className="text-gray-500 hover:text-red-400 transition bg-transparent border-0 cursor-pointer"
@@ -159,7 +157,7 @@ export default function BudgetsPage() {
                     </button>
                 </div>
 
-                {/* Iznosi */}
+                {/* iznosi */}
                 <div className="flex justify-between items-end mb-2 relative z-10">
                     <div>
                         <span className="text-sm text-gray-400">Potrošeno:</span>
@@ -171,7 +169,7 @@ export default function BudgetsPage() {
                     </div>
                 </div>
 
-                {/* Progress Bar */}
+                {/* progress bar */}
                 <div className="relative z-10">
                     <div className="flex justify-between text-xs mb-1">
                         <span className={budget.percentage > 100 ? "text-red-400 font-bold" : "text-gray-400"}>

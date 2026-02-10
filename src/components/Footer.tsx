@@ -32,7 +32,7 @@ export default function Footer() {
     return null;
   }
 
-  // Sakrij footer na početnoj strani ako korisnik NIJE ulogovan (Landing page)
+  // Sakrij footer na pocetnoj strani ako korisnik NIJE ulogovan (Landing page)
   if (pathname === "/" && !user) {
     return null;
   }
@@ -56,7 +56,7 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Kolona 2: Navigacija (SADA SADRŽI SVE LINKOVE KAO NAVBAR) */}
+          {/* Kolona 2: Navigacija */}
           <div>
             <h3 className="text-white font-bold text-lg mb-4">Brzi Linkovi</h3>
             <ul className="space-y-2 text-sm">

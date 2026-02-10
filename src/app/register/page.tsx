@@ -31,7 +31,7 @@ export default function RegisterPage() {
         return;
       }
 
-      // Ako je uspešno, idi na login
+      // Ako je uspesno, idi na login
       router.push("/login");
 
     } catch (err) {

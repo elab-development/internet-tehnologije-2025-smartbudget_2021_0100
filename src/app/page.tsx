@@ -55,9 +55,7 @@ export default function Home() {
     return <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">Učitavanje...</div>;
   }
 
-  // ---------------------------------------------------------
-  // SCENARIO 1: GOST -> LANDING PAGE
-  // ---------------------------------------------------------
+  // Scenario za GUEST
   if (!user) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white p-4 text-center">
@@ -85,16 +83,12 @@ export default function Home() {
     );
   }
 
-  // ---------------------------------------------------------
-  // SCENARIO 2: ADMIN -> ADMIN PANEL
-  // ---------------------------------------------------------
+  // Admin
   if (user.role === 'ADMIN') {
     return <AdminDashboard />;
   }
 
-  // ---------------------------------------------------------
-  // SCENARIO 3: KORISNIK -> DASHBOARD (STARI RASPORED)
-  // ---------------------------------------------------------
+  // Obican user
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
       
@@ -109,20 +103,15 @@ export default function Home() {
             <p className="text-gray-400 mt-1">Evo tvog finansijskog preseka.</p>
           </header>
 
-          {/* GRID SISTEM: 1/3 Levo, 2/3 Desno */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* LEVA KOLONA: Statistika (Kartice) */}
             <div className="lg:col-span-1 h-full">
               <DashboardStats transactions={transactions} />
             </div>
 
-            {/* DESNA KOLONA: Grafikoni + Istorija */}
             <div className="lg:col-span-2 space-y-8">
-               {/* Prvo Grafikoni */}
                <DashboardCharts transactions={transactions} />
                
-               {/* Ispod njih Tabela */}
                <TransactionHistory 
                   transactions={transactions} 
                   onRefresh={() => fetchTransactions(user.id)} 

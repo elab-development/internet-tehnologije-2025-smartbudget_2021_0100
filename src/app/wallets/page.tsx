@@ -73,13 +73,13 @@ export default function WalletsPage() {
     }
   };
 
-  // 1. KORAK: KLIK NA KANTICU (Samo otvara prozor)
+  // klik na kanticu (Samo otvara prozor)
   const initiateDelete = (e: React.MouseEvent, walletId: number) => {
-    e.stopPropagation(); // Sprečava da se otvori istorija transakcija
-    setWalletToDelete(walletId); // Otvara modal za brisanje
+    e.stopPropagation(); // sprecava da se otvori istorija transakcija
+    setWalletToDelete(walletId); // otvara model za brisanje
   };
 
-  // 2. KORAK: POTVRDA BRISANJA (Zove API)
+  // potvrda brisanja (zovemo api)
   const confirmDeleteAction = async () => {
     if (!walletToDelete) return;
 
@@ -252,7 +252,7 @@ export default function WalletsPage() {
             </div>
         </div>
 
-        {/* --- MODAL 1: ISTORIJA TRANSAKCIJA --- */}
+        {/* istorija transakcija */}
         {selectedWallet && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn" onClick={closeModal}>
                 <div 
@@ -320,7 +320,7 @@ export default function WalletsPage() {
             </div>
         )}
 
-        {/* --- MODAL 2: POTVRDA BRISANJA (NOVO!) --- */}
+        {/* potvrsa brisanja */}
         {walletToDelete && (
             <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
                 <div className="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-sm p-6 transform scale-100 animate-in fade-in zoom-in duration-200">

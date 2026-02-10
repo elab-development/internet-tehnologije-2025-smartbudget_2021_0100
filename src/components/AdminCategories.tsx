@@ -8,7 +8,6 @@ export default function AdminCategories() {
   const [newCatType, setNewCatType] = useState("EXPENSE");
   const [loading, setLoading] = useState(true);
 
-  // NOVO: State za brisanje (pamti ID kategorije koju brišemo)
   const [categoryToDelete, setCategoryToDelete] = useState<number | null>(null);
 
   useEffect(() => {
@@ -46,7 +45,7 @@ export default function AdminCategories() {
     }
   };
 
-  // NOVO: Funkcija za brisanje (poziva se iz modala)
+  // funkcija za brisanje
   const handleDelete = async () => {
     if (!categoryToDelete) return;
 
@@ -56,7 +55,7 @@ export default function AdminCategories() {
       });
 
       if (res.ok) {
-        // Ažuriramo listu bez ponovnog učitavanja sa servera
+        // azuriramo listu bez ponovnog ucitavanja sa servera
         setCategories(categories.filter((c) => c.id !== categoryToDelete));
         setCategoryToDelete(null); // Zatvaramo modal
       } else {

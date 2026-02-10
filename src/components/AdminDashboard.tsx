@@ -27,13 +27,13 @@ export default function AdminDashboard() {
   const toggleBlockUser = async (userId: number, currentStatus: boolean) => {
     try {
       const res = await fetch("/api/admin/users/block", {
-        method: "PUT", // 👈 OVO JE BILO "POST", PROMENI U "PUT"
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, isBlocked: !currentStatus }),
       });
 
       if (res.ok) {
-        // Ažuriraj lokalno stanje da ne moramo da refetchujemo sve
+        // azuriramo lokalno stanje da ne moramo da refresujemo sve
         setUsers(users.map(u => 
             u.id === userId ? { ...u, isBlocked: !currentStatus } : u
         ));
@@ -80,10 +80,10 @@ export default function AdminDashboard() {
            </div>
         </div>
 
-        {/* SADRŽAJ TABOVA */}
+        {/* SADRZAJ TABOVA */}
         <div className="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl overflow-hidden">
             
-            {/* 1. TAB: KORISNICI */}
+            {/* KORISNICI */}
             {activeTab === 'users' && (
                 <div className="p-6">
                     <h2 className="text-xl font-bold text-white mb-6">Lista registrovanih korisnika</h2>
@@ -137,7 +137,7 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {/* 2. TAB: KATEGORIJE */}
+            {/* KATEGORIJE */}
             {activeTab === 'categories' && (
                 <div className="p-6">
                     <AdminCategories />

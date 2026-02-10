@@ -114,7 +114,7 @@ export default function TransferPage() {
         ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
             
-            {/* IZVORIŠTE */}
+            {/* IZVORISTE */}
             <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">Sa novčanika (Šalje)</label>
                 <select 
@@ -130,7 +130,7 @@ export default function TransferPage() {
                 </select>
             </div>
 
-            {/* ODREDIŠTE */}
+            {/* ODREDISTE */}
             <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">Na novčanik (Prima)</label>
                 <select 

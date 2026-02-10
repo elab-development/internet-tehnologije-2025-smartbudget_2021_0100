@@ -12,12 +12,11 @@ export default function TransactionHistory({ transactions, onRefresh }: Transact
   // State za loading brisanja (opciono)
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  // --- FILTERI ---
+  // filteri
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("ALL"); 
   const [filterCategory, setFilterCategory] = useState("ALL");
 
-  // Filtriranje transakcija na osnovu state-a
   const filteredTransactions = transactions.filter((tx) => {
     const matchesSearch = tx.description?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           tx.wallet?.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -45,7 +44,7 @@ export default function TransactionHistory({ transactions, onRefresh }: Transact
         });
 
         if (res.ok) {
-            // Uspešno obrisano -> Zovemo funkciju iz page.tsx da osveži podatke
+            // zovemo funkciju iz page.tsx da osvezi podatke
             onRefresh();
         } else {
             const errorData = await res.json();

@@ -12,13 +12,13 @@ interface Transaction {
 
 export default function DashboardStats({ transactions }: { transactions: Transaction[] }) {
   
-  // 1. RAČUNANJE STATISTIKE
+  // racunanje statistike
   const stats = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    // Filtriramo samo transakcije iz OVOG meseca
+    // filtriramo transakcije samo iz ovog meseca
     const thisMonthTransactions = transactions.filter(t => {
       const d = new Date(t.date);
       return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
@@ -35,13 +35,13 @@ export default function DashboardStats({ transactions }: { transactions: Transac
         income += amt;
       } else if (t.type === "EXPENSE") {
         expense += amt;
-        // Sabiramo troškove po kategorijama
+        // sabiramo troskove po kategorijama
         const catName = t.category?.name || "Ostalo";
         categoryMap[catName] = (categoryMap[catName] || 0) + amt;
       }
     });
 
-    // Sortiramo kategorije da nađemo TOP 3
+    // sortiramo kategorije da nadjemo top 3
     const topCategories = Object.entries(categoryMap)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 3)
@@ -52,7 +52,7 @@ export default function DashboardStats({ transactions }: { transactions: Transac
       }));
 
     const savings = income - expense;
-    // Koliko je % potrošeno od prihoda (za progress bar)
+    // Koliko je % potroseno od prihoda
     const spentPercentage = income > 0 ? Math.min((expense / income) * 100, 100) : 0;
 
     return { income, expense, savings, topCategories, spentPercentage };
@@ -76,7 +76,7 @@ export default function DashboardStats({ transactions }: { transactions: Transac
         
         {/* Pozadina bara */}
         <div className="w-full h-4 bg-gray-700 rounded-full overflow-hidden shadow-inner">
-            {/* Linija potrošnje */}
+            {/* Linija potrosnje */}
             <div 
                 className={`h-full rounded-full transition-all duration-1000 ease-out ${
                     stats.spentPercentage > 90 ? 'bg-red-500' : 'bg-gradient-to-r from-blue-500 to-blue-400'

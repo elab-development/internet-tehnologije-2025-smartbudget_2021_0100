@@ -23,7 +23,7 @@ const COLORS = ["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"
 
 export default function DashboardCharts({ transactions }: DashboardChartsProps) {
   
-  // 1. PRIPREMA PODATAKA ZA PIE CHART
+  // priprema podataka za pie chart
   const pieData = useMemo(() => {
     const expenses = transactions.filter((t) => t.type === "EXPENSE");
     
@@ -39,7 +39,7 @@ export default function DashboardCharts({ transactions }: DashboardChartsProps) 
     }));
   }, [transactions]);
 
-  // 2. PRIPREMA PODATAKA ZA BAR CHART
+  // priprema podataka za bar chart
   const barData = useMemo(() => {
     let income = 0;
     let expense = 0;
@@ -60,7 +60,7 @@ export default function DashboardCharts({ transactions }: DashboardChartsProps) 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       
-      {/* KARTICA 1: PIE CHART */}
+      {/* pie chart */}
       <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-lg flex flex-col items-center">
         <h3 className="text-lg font-bold text-white mb-4">Struktura Troškova</h3>
         {pieData.length > 0 ? (
@@ -94,7 +94,7 @@ export default function DashboardCharts({ transactions }: DashboardChartsProps) 
         )}
       </div>
 
-      {/* KARTICA 2: BAR CHART */}
+      {/* bar chart */}
       <div className="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-lg flex flex-col items-center">
         <h3 className="text-lg font-bold text-white mb-4">Prihodi vs Troškovi</h3>
         <div className="w-full h-64">
@@ -105,7 +105,6 @@ export default function DashboardCharts({ transactions }: DashboardChartsProps) 
               <YAxis stroke="#9CA3AF" />
               <Tooltip 
                 contentStyle={{ backgroundColor: '#1F2937', borderColor: '#374151', color: 'white' }}
-                // 👇 IZMENA: Stavili smo 'any' da popravimo grešku
                 formatter={(value: any) => `${Number(value).toLocaleString()} RSD`}
               />
               <Bar dataKey="iznos" radius={[4, 4, 0, 0]}>
