@@ -24,7 +24,7 @@ jobs:
           node-version: '20'
 
       - name: Instalacija zavisnosti
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Pokretanje automatizovanih testova
         run: npm run test
