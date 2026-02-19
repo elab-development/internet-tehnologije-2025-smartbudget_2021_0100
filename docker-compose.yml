@@ -1,15 +1,42 @@
 version: '3.8'
 
 services:
+  # 1. SERVIS ZA BAZU (MySQL) - Tvoja podešavanja sačuvana
   database:
     image: mysql:8.0
+    container_name: smartbudget_db
     environment:
-      MYSQL_DATABASE: smartbudget
       MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: smartbudget
     ports:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - smartbudget_network
 
+  # 2. SERVIS ZA APLIKACIJU (Next.js) - Novi deo
+  app:
+    build: .
+    container_name: smartbudget_app
+    ports:
+      - "3000:3000"
+    environment:
+      # PAZI OVDE: 
+      # - Šifra je 'admin' (kao u tvom fajlu gore)
+      # - Ime servisa je 'database' (ne 'localhost')
+      # - Port je 3306 (jer unutar Docker mreže kontejneri uvek komuniciraju preko originalnih portova)
+      - DATABASE_URL=mysql://root:admin@database:3306/smartbudget
+    depends_on:
+      - database
+    networks:
+      - smartbudget_network
+
+# Definisanje Docker mreže da bi app i db mogli da komuniciraju
+networks:
+  smartbudget_network:
+    driver: bridge
+
+# Definisanje trajnog skladišta za bazu
 volumes:
   mysql_data:

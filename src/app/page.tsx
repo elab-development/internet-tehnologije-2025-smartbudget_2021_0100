@@ -7,7 +7,7 @@ import AdminDashboard from "@/components/AdminDashboard";
 import TransactionHistory from "@/components/TransactionHistory";
 import DashboardStats from "@/components/DashboardStats";
 import DashboardCharts from "@/components/DashboardCharts"; 
-import Footer from "@/components/Footer";
+import ExternalWidgets from "@/components/ExternalWidgets"; // <--- 1. UBAČENO
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
@@ -112,6 +112,9 @@ export default function Home() {
             <div className="lg:col-span-2 space-y-8">
                <DashboardCharts transactions={transactions} />
                
+               {/* <--- 2. UBAČENO OVDE: Eksterni API widgeti ispod chartova ---> */}
+               <ExternalWidgets />
+               
                <TransactionHistory 
                   transactions={transactions} 
                   onRefresh={() => fetchTransactions(user.id)} 
@@ -123,7 +126,6 @@ export default function Home() {
         </div>
       </div>
 
-      <Footer />
       
     </div>
   );

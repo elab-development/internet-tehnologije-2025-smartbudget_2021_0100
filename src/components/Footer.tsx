@@ -91,6 +91,14 @@ export default function Footer() {
                   </li>
                 </>
               )}
+              
+              {/* DODAT LINK ZA API DOKUMENTACIJU (Vidljiv svima koji vide Footer) */}
+              <li className="pt-2">
+                <Link href="/api-docs" className="text-gray-500 hover:text-white transition flex items-center justify-center md:justify-start gap-2">
+                  <span>📖</span> API Dokumentacija
+                </Link>
+              </li>
+              
             </ul>
           </div>
 
