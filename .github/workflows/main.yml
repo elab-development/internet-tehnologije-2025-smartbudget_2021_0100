@@ -5,13 +5,15 @@ on:
     branches:
       - main
       - master
+      - develop
   pull_request:
     branches:
       - main
       - master
+      - develop
 
 jobs:
-  testiranje:
+  testiranje-i-build:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,3 +30,6 @@ jobs:
 
       - name: Pokretanje automatizovanih testova
         run: npm run test
+        
+      - name: Testiranje Docker Build-a
+        run: docker-compose build
