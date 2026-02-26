@@ -1,11 +1,26 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { cookies } from "next/headers";
 
-// da uvek povuce sveze podatke iz baze
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const cookieStore = await cookies();
+    const userIdCookie = cookieStore.get('userId');
+
+    if (!userIdCookie || !userIdCookie.value) {
+        return NextResponse.json({ error: "Neautorizovan pristup." }, { status: 401 });
+    }
+
+    const currentUser = await prisma.user.findUnique({
+        where: { id: parseInt(userIdCookie.value) }
+    });
+
+    if (!currentUser || currentUser.role !== 'ADMIN') {
+        return NextResponse.json({ error: "Zabranjen pristup. Niste administrator." }, { status: 403 });
+    }
+
     const users = await prisma.user.findMany({
       select: {
         id: true,
