@@ -1,6 +1,5 @@
-// Uklonili smo strogi NextConfig tip i stavili 'any' da nas TypeScript ne bi blokirao
+
 const nextConfig: any = {
-  // 1. Ignorišemo sitna upozorenja tokom produkcionog build-a
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -8,7 +7,7 @@ const nextConfig: any = {
     ignoreDuringBuilds: true,
   },
   
-  // 2. Naši bezbednosni headeri
+  // 2. Nasi bezbednosni headeri
   async headers() {
     return [
       {

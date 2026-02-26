@@ -3,10 +3,10 @@
 import dynamic from "next/dynamic";
 import "swagger-ui-react/swagger-ui.css";
 
-// Učitavamo Swagger samo na klijentu da izbegnemo Next.js SSR greške
+// Ucitivamo swagger na klijentskoj strani i naglasavamo preko ssr da se ne renderuje na serveru
 const SwaggerUI = dynamic(() => import("swagger-ui-react"), { ssr: false });
 
-// Ovo je tvoja API specifikacija (JSON format)
+// Ovo je API specifikacija (JSON format)
 const swaggerSpec = {
   openapi: "3.0.0",
   info: {
@@ -44,7 +44,9 @@ const swaggerSpec = {
         parameters: [
           {
             name: "userId",
+            // query znaci da zahtev koji saljemo tj userId se u URL nalazi odmah iza znaka ?
             in: "query",
+            // znaci da je ovaj parametar obavezan
             required: true,
             schema: { type: "integer" },
           },
@@ -60,6 +62,7 @@ const swaggerSpec = {
           content: {
             "application/json": {
               schema: {
+                // JSON mora biti objekat
                 type: "object",
                 properties: {
                   amount: { type: "number" },

@@ -7,7 +7,7 @@ import AdminDashboard from "@/components/AdminDashboard";
 import TransactionHistory from "@/components/TransactionHistory";
 import DashboardStats from "@/components/DashboardStats";
 import DashboardCharts from "@/components/DashboardCharts"; 
-import ExternalWidgets from "@/components/ExternalWidgets"; // <--- 1. UBAČENO
+import ExternalWidgets from "@/components/ExternalWidgets";
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);

@@ -7,7 +7,7 @@ export default function ExternalWidgets() {
   const [advice, setAdvice] = useState<string>("Učitavanje saveta...");
 
   useEffect(() => {
-    // 1. Eksterni API: Kursna lista (ExchangeRate-API - podržava RSD!)
+    // 1. Eksterni API: Kursna lista
     const fetchExchangeRate = async () => {
       try {
         const res = await fetch("https://open.er-api.com/v6/latest/EUR");
